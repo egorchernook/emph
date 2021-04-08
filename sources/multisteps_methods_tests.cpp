@@ -6,11 +6,11 @@
 
 Numerical_methods::multisteps_methods_tests::multisteps_methods_tests() {
     std::cout << std::endl << "\ttesting multisteps ODE solving methods..." << std::endl;
-    assert( implicit_Adams_Moulton_method_test() );
+    assert( Adams_Moulton_method_test() );
     std::cout << "\t\timplicit Adams Moulton method works" << std::endl;
 }
 
-bool Numerical_methods::multisteps_methods_tests::implicit_Adams_Moulton_method_test() {
+bool Numerical_methods::multisteps_methods_tests::Adams_Moulton_method_test() {
     const implicit_Runge_Kutta_method< vector<double>, 3 > impl_rkm_method{
             { { 1.0/6 , 0.0   , -1.0/6 },
                       { 1.0/12, 5.0/12,  0.0   },
@@ -18,7 +18,7 @@ bool Numerical_methods::multisteps_methods_tests::implicit_Adams_Moulton_method_
             {   1.0/6 , 2.0/3 , 1.0/6    },
             {   0.0   , 1.0/2   , 1.0    }
     };
-    const implicit_Adams_Moulton_method< vector<double>, 4 > impl_msm_solver{
+    const Adams_Moulton_method< vector<double>, 4 > impl_msm_solver{
         {3.0/8, 19.0/24, -5.0/24, 1.0/24} };
     vector<double> initial_state = { 0.0, 1.0 };
     bool result = true;

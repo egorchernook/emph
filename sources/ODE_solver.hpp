@@ -9,9 +9,14 @@
 #include "ring_buffer.hpp"
 
 namespace Numerical_methods{
+
     template<solution_t_concept solution_t>
-    class ODE_solver {
+    class Cauchy_problem_solver{};
+
+    template<solution_t_concept solution_t>
+    class ODE_solver{
     private:
+
     public:
     };
 }

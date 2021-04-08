@@ -11,13 +11,13 @@
 namespace Numerical_methods{
 
     template<solution_t_concept solution_t>
-    class multisteps_methods : public ODE_solver<solution_t> {
+    class multisteps_methods : public Cauchy_problem_solver<solution_t> {
     public:
         using initial_state_t = std::vector<solution_t>;
     };
 
     template<solution_t_concept solution_t, std::size_t precision_order>
-    class Adams_Moulton_method : public multisteps_methods<solution_t> {
+    class Adams_method : public multisteps_methods<solution_t> {
     public:
         using function_t = std::function< solution_t(const solution_t&, double)>;
         using typename multisteps_methods<solution_t>::initial_state_t;
@@ -28,7 +28,7 @@ namespace Numerical_methods{
                                                     double time ) const = 0;
     public:
         std::array<double, precision_order> coefficients{0.0};
-        Adams_Moulton_method(const std::array<double, precision_order> &_coefficients) :
+        Adams_method(const std::array<double, precision_order> &_coefficients) :
             coefficients(_coefficients) {}
         return_t<solution_t> make_step(
                 const initial_state_t &initial_state,
@@ -40,10 +40,10 @@ namespace Numerical_methods{
     };
 
     template<solution_t_concept solution_t, std::size_t precision_order>
-    class implicit_Adams_Moulton_method : public Adams_Moulton_method<solution_t,precision_order> {
-        using Adams_Moulton_method<solution_t,precision_order>::Adams_Moulton_method;
-        using typename Adams_Moulton_method<solution_t,precision_order>::function_t;
-        using typename Adams_Moulton_method<solution_t,precision_order>::initial_state_t;
+    class Adams_Moulton_method : public Adams_method<solution_t,precision_order> {
+        using Adams_method<solution_t,precision_order>::Adams_method;
+        using typename Adams_method<solution_t,precision_order>::function_t;
+        using typename Adams_method<solution_t,precision_order>::initial_state_t;
     private:
         return_t<solution_t> make_step_impl(
                 const initial_state_t &initial_state,

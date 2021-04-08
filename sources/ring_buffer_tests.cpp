@@ -9,7 +9,7 @@ Numerical_methods::ring_buffer_tests::ring_buffer_tests() {
     assert( push_test() );
     std::cout << "\t\twriting works" << std::endl;
     assert( current_state_test() );
-    std::cout << "\t\tcast to vector works" << std::endl;
+    std::cout << "\t\tvector creation works" << std::endl;
 }
 
 bool Numerical_methods::ring_buffer_tests::read_test() {

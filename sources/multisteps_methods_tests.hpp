@@ -15,7 +15,7 @@ namespace Numerical_methods {
     public:
         multisteps_methods_tests();
 
-        static bool implicit_Adams_Moulton_method_test();
+        static bool Adams_Moulton_method_test();
     };
 }
 

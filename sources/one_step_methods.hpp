@@ -13,7 +13,7 @@
 namespace Numerical_methods{
 
     template< solution_t_concept solution_t>
-    class one_step_ODE_solver : public ODE_solver<solution_t> {
+    class one_step_ODE_solver : public Cauchy_problem_solver<solution_t> {
     public:
         using initial_state_t = solution_t;
     };
