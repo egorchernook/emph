@@ -6,8 +6,11 @@
 
 namespace Numerical_methods {
 
+    template<solution_element_t T>
+    class base_matrix{};
+
     template<solution_element_t value_t, std::size_t Height, std::size_t Width = Height>
-    class matrix {
+    class matrix : base_matrix<value_t>{
     private:
         value_t ** data = nullptr;
 

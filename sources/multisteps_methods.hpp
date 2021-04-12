@@ -2,64 +2,52 @@
 #define MAIN_CPP_MULTISTEPS_METHODS_HPP
 
 #include <cstdlib>
-#include <array>
 #include <vector>
+#include <type_traits>
 #include "SNAE_solver.hpp"
 #include "solution_t_concept.hpp"
 #include "ODE_solver.hpp"
 
 namespace Numerical_methods{
 
-    template<solution_t_concept solution_t>
-    class multisteps_methods : public Cauchy_problem_solver<solution_t> {
+    template<solution_t_concept solution_t, std::size_t number_of_steps>
+    class Adams_method : public multisteps_solver<solution_t,number_of_steps> {
     public:
-        using initial_state_t = std::vector<solution_t>;
+        using typename multisteps_solver<solution_t,number_of_steps>::function_t;
+        using typename multisteps_solver<solution_t,number_of_steps>::initial_state_t;
+        using multisteps_solver<solution_t,number_of_steps>::multisteps_solver;
+        using multisteps_solver<solution_t,number_of_steps>::function;
+        std::vector<double> coefficients{0.0};
+        void set_coefficients( const std::vector<double> &coefficients_ ) {
+            assert( coefficients_.size() == number_of_steps);
+            coefficients = coefficients_;
+        }
     };
 
-    template<solution_t_concept solution_t, std::size_t precision_order>
-    class Adams_method : public multisteps_methods<solution_t> {
+    template< solution_t_concept solution_t, std::size_t number_of_steps>
+    class Adams_Moulton_method : public Adams_method<solution_t,number_of_steps>,
+                                 public Implicit<solution_t> {
     public:
-        using function_t = std::function< solution_t(const solution_t&, double)>;
-        using typename multisteps_methods<solution_t>::initial_state_t;
-    private:
-        virtual return_t<solution_t> make_step_impl(const initial_state_t &initial_state,
-                                                    const function_t& initial_function,
-                                                    double step,
-                                                    double time ) const = 0;
-    public:
-        std::array<double, precision_order> coefficients{0.0};
-        Adams_method(const std::array<double, precision_order> &_coefficients) :
-            coefficients(_coefficients) {}
-        return_t<solution_t> make_step(
-                const initial_state_t &initial_state,
-                const function_t& initial_function,
-                double step,
-                double time ) const {
-            return this->make_step_impl( initial_state, initial_function, step, time);
-        };
-    };
-
-    template<solution_t_concept solution_t, std::size_t precision_order>
-    class Adams_Moulton_method : public Adams_method<solution_t,precision_order> {
-        using Adams_method<solution_t,precision_order>::Adams_method;
-        using typename Adams_method<solution_t,precision_order>::function_t;
-        using typename Adams_method<solution_t,precision_order>::initial_state_t;
+        using base_t = Adams_method<solution_t,number_of_steps>;
+        using base_t::Adams_method;
+        using typename base_t::function_t;
+        using typename base_t::initial_state_t;
+        using base_t::function;
     private:
         return_t<solution_t> make_step_impl(
                 const initial_state_t &initial_state,
-                const function_t& initial_function,
                 double step,
                 double time ) const override {
 
-            assert(initial_state.size() == precision_order - 1);
+            assert(initial_state.size() == number_of_steps - 1);
 
-            solution_t constant_part = this->coefficients[1] * initial_function(
+            solution_t constant_part = this->coefficients[1] * function(
                                         initial_state[0],
                                         time - step );
-            for (int idx = 2; idx < precision_order; ++idx ) {
-                const solution_t temp = this->coefficients[idx] * initial_function(
-                                                                                    initial_state[ idx - 1 ],
-                                                                                    time - step * idx);
+            for (int idx = 2; idx < number_of_steps; ++idx ) {
+                const solution_t temp = this->coefficients[idx] * function(
+                        initial_state[ idx - 1 ],
+                        time - step * idx);
                 constant_part += temp;
             }
 
@@ -68,10 +56,10 @@ namespace Numerical_methods{
 
             const double beta_zero = this->coefficients[0];
             auto right_part_function = [&]( const solution_t& solution) noexcept -> solution_t {
-                        return step * beta_zero * initial_function( solution, time) + constant_part;
+                        return step * beta_zero * function( solution, time) + constant_part;
             };
 
-            fixed_point_iterations_method< solution_t> solver{};
+            auto solver = Implicit<solution_t>::create_SNAE_solver();
 
             return_t<solution_t> result = solver.solve( initial_state[0] , right_part_function );
             return result;

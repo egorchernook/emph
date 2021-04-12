@@ -5,6 +5,7 @@
 #include "vector.hpp"
 #include "solution_t_concept.hpp"
 namespace Numerical_methods {
+
     template<
             typename solution_t,
             std::size_t elements_amount
@@ -61,11 +62,12 @@ namespace Numerical_methods {
         }
 
         [[nodiscard]] solution_t first() noexcept {
-            return this->at(start - 1);
+            return data[(start -1) % elements_amount];
         }
 
         [[nodiscard]] solution_t last() noexcept {
-            return this->at(start);
+            assert( full );
+            return data[start];
         }
 
         [[nodiscard]] bool is_filled() const noexcept {
