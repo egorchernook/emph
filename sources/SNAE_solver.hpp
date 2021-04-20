@@ -66,7 +66,7 @@ namespace Numerical_methods {
             solution_t old_solution = initial_state;
             solution_t new_solution = initial_state;
 
-            auto get_local_error = [&]() noexcept -> double {
+            auto get_local_error = [&new_solution, &old_solution]() noexcept -> double {
                 return Numerical_methods::max(Numerical_methods::abs(new_solution - old_solution));
             };
 
@@ -91,7 +91,7 @@ namespace Numerical_methods {
             solution_t old_solution = initial_state;
             solution_t new_solution = initial_state;
 
-            auto get_local_error = [&]() noexcept -> double {
+            auto get_local_error = [&new_solution, &old_solution]() noexcept -> double {
                 return Numerical_methods::max(Numerical_methods::abs(new_solution - old_solution));
             };
 

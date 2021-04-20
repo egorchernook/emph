@@ -55,7 +55,8 @@ namespace Numerical_methods{
             constant_part += initial_state[0];
 
             const double beta_zero = this->coefficients[0];
-            auto right_part_function = [&]( const solution_t& solution) noexcept -> solution_t {
+            auto right_part_function = [&step, &beta_zero, &time, &constant_part, this]
+                    ( const solution_t& solution) noexcept -> solution_t {
                         return step * beta_zero * function( solution, time) + constant_part;
             };
 
