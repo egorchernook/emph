@@ -123,6 +123,18 @@ namespace Numerical_methods {
         }
         return result;
     }
+
+    template<solution_element_t T>
+    vector<T> inverse( const vector<T> &initial){
+        vector<T> result = initial;
+        for( auto &x : result){
+            x = inverse(x);
+        }
+        return result;
+    }
+
+    template<>
+    vector<double> inverse<double>( const vector<double> &initial);
 }
 
 #endif //MAIN_CPP_VECTOR_HPP
