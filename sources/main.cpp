@@ -44,7 +44,7 @@ void harmonic(){
     impl_msm_solver.set_starting_method(impl_rkm_method);
     impl_msm_solver.set_coefficients({3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24});
 
-    std::ofstream output("../../results/test/test.dat", std::ios_base::trunc);
+    std::ofstream output("../../results/test/test1.dat", std::ios_base::trunc);
     for( int i = 0; i < steps_amount; ++i ) {
         const auto result = impl_msm_solver.get_next_step( step );
 
@@ -144,18 +144,47 @@ void first_task() {
             //}
         //}
 };
-
-int main(){
-    //harmonic();
-    //first_task();
-    //Numerical_methods::test();
-
+void second_task_test1(){
     using namespace Numerical_methods;
 
-    constexpr double step = 0.001;
+    constexpr int precision_order = 4;
+    Butcher_table<precision_order-1> table{
+            {{1.0 / 6, 0.0, -1.0 / 6},
+                      {1.0 / 12, 5.0 / 12, 0.0},
+                               {0.5, 1.0 / 3, 1.0 / 6}},
+            {1.0 / 6, 2.0 / 3, 1.0 / 6},
+            {0.0,     1.0 / 2, 1.0}
+    };
+    std::vector<double> coefficients = {3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24};
+    implicit_Runge_Kutta_method<vector<double>, precision_order-1, precision_order> impl_rkm_method{};
+    impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method< vector<double>, precision_order> impl_msm_solver{};
+    impl_msm_solver.set_starting_method( impl_rkm_method );
+    impl_msm_solver.set_coefficients( coefficients );
+
+    implicit_Runge_Kutta_method<vector<double>, precision_order-1, precision_order> another_impl_rkm_method{};
+    another_impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method< vector<double>, precision_order> another_impl_msm_solver{};
+    another_impl_msm_solver.set_starting_method(another_impl_rkm_method);
+    another_impl_msm_solver.set_coefficients( coefficients );
+
+    constexpr double c1 = 1.0;
+    constexpr double c2 = 1.0;
+    const auto exact_result = [&c1,&c2](double x) -> double {
+        return c1*sin(x) + c2*cos(x);
+    };
+    const auto exact_result_derivative = [&c1,&c2](double x) -> double {
+        return c1*cos(x) - c2*sin(x);
+    };
+
+    const boundary_conditions<double> conditions{ 1.0, exact_result(10), 0.0, 10.0};
+
+    constexpr double step = 0.000'1;
     shooting_method<double> solver(
             [](double x, const double& y, const double& y1) -> double {
-                return -1.0 * y;
+                return -y;
             },
             [](double x, const double& y, const double& y1) -> double {
                 return -1.0;
@@ -163,26 +192,308 @@ int main(){
             [](double x, const double& y, const double& y1) -> double {
                 return 0.0;
             },
-            { 1.0, std::sin(10) + std::cos(10), 0.0, 10.0},
-            0.0,
-            step
+            conditions,
+            3.0,
+            step,
+            impl_msm_solver,
+            another_impl_msm_solver
     );
 
-    constexpr int steps_amount = 10/step;
+    const int steps_amount = (conditions.right_border - conditions.left_border)/step;
+    int counter = 1;
 
-    std::ofstream output("../../results/test/test_second.dat", std::ios_base::trunc);
-    for( int i = 0; i < steps_amount; ++i ) {
-        const auto result = solver.get_next_step();
-
-        output  << i * step
-                << "\t" << result.solution[0] << "\t" << result.solution[1]
-                << "\t\t" << std::sin( (i + 1)*step ) + std::cos( (i + 1)*step)
-                << "\t" << std::cos( (i + 1)*step ) - std::sin( (i + 1)*step)
-                << "\n";
+    std::vector<std::vector<double>> data{};
+    do {
+        data.clear();
+        for (int i = 0; i <= steps_amount; ++i) {
+            double y{0.0};
+            double y1{0.0};
+            double Y{0.0};
+            double U{0.0};
+            if( i == 0 ) {
+                y = solver.conditions.left_value;
+                y1 = solver.get_current_angle();
+                Y = 0.0;
+                U = 1.0;
+            } else {
+                const auto result = solver.get_next_step();
+                y = result[0].solution[0];
+                y1 = result[0].solution[1];
+                Y = result[1].solution[0];
+                U = result[1].solution[1];
+            }
+            data.push_back( {
+                            i * step,
+                            y,
+                            y1,
+                            Y,
+                            U,
+                            exact_result(i * step),
+                            exact_result_derivative( i * step)
+            });
+        }
+        if( solver.is_accuracy_reached( step*step*step ) ){
+            break;
+        } else {
+            std::cout << solver.get_solution_error() << "\t" << solver.get_current_angle() << std::endl;
+            solver.restart( solver.get_new_angle() );
+            counter++;
+        }
+    } while ( true );
+    std::ofstream output("../../results/test/test_second1.dat", std::ios_base::trunc);
+    for( auto& x : data) {
+        output << x[0]
+               << "\t" << x[1] << "\t" << x[2] << "\t" << x[3] << "\t" << x[4]
+               << "\t\t" << x[5]
+               << "\t" << x[6]
+               << "\n";
     }
-
     output.flush();
     output.close();
+    std::cout << "shots : " << counter << "\t" << "angle : " << solver.get_current_angle() << std::endl;
+};
+void second_task_test2(){
+    using namespace Numerical_methods;
 
+    constexpr int precision_order = 4;
+    Butcher_table<precision_order-1> table{
+            {{1.0 / 6, 0.0, -1.0 / 6},
+                      {1.0 / 12, 5.0 / 12, 0.0},
+                               {0.5, 1.0 / 3, 1.0 / 6}},
+            {1.0 / 6, 2.0 / 3, 1.0 / 6},
+            {0.0,     1.0 / 2, 1.0}
+    };
+    std::vector<double> coefficients = {3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24};
+    implicit_Runge_Kutta_method<vector<double>, precision_order-1, precision_order> impl_rkm_method{};
+    impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method< vector<double>, precision_order> impl_msm_solver{};
+    impl_msm_solver.set_starting_method( impl_rkm_method );
+    impl_msm_solver.set_coefficients( coefficients );
+
+    implicit_Runge_Kutta_method<vector<double>, precision_order-1, precision_order> another_impl_rkm_method{};
+    another_impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method< vector<double>, precision_order> another_impl_msm_solver{};
+    another_impl_msm_solver.set_starting_method(another_impl_rkm_method);
+    another_impl_msm_solver.set_coefficients( coefficients );
+
+    constexpr double c1 = 1.0;
+    constexpr double c2 = 1.0;
+    auto ch = [](double x) -> double {
+        return 0.5 * (std::exp(x) + std::exp(-x));
+    };
+    auto sh = [](double x) -> double {
+        return 0.5 * (std::exp(x) - std::exp(-x));
+    };
+    const auto exact_result = [ch,sh](double x) -> double {
+        return c1*sh(x) + c2*ch(x);
+    };
+    const auto exact_result_derivative = [&c1,&c2,ch,sh](double x) -> double {
+        return c1*ch(x) + c2*sh(x);
+    };
+
+    const boundary_conditions<double> conditions{ 1.0, exact_result(10), 0.0, 10.0};
+
+    constexpr double step = 0.000'1;
+    shooting_method<double> solver(
+            [](double x, const double& y, const double& y1) -> double {
+                return y;
+            },
+            [](double x, const double& y, const double& y1) -> double {
+                return 1.0;
+            },
+            [](double x, const double& y, const double& y1) -> double {
+                return 0.0;
+            },
+            conditions,
+            3.0,
+            step,
+            impl_msm_solver,
+            another_impl_msm_solver
+    );
+
+    const int steps_amount = (conditions.right_border - conditions.left_border)/step;
+    int counter = 1;
+
+    std::vector<std::vector<double>> data{};
+    do {
+        data.clear();
+        for (int i = 0; i <= steps_amount; ++i) {
+            double y{0.0};
+            double y1{0.0};
+            double Y{0.0};
+            double U{0.0};
+            if( i == 0 ) {
+                y = solver.conditions.left_value;
+                y1 = solver.get_current_angle();
+                Y = 0.0;
+                U = 1.0;
+            } else {
+                const auto result = solver.get_next_step();
+                y = result[0].solution[0];
+                y1 = result[0].solution[1];
+                Y = result[1].solution[0];
+                U = result[1].solution[1];
+            }
+            data.push_back( {
+                                    i * step,
+                                    y,
+                                    y1,
+                                    Y,
+                                    U,
+                                    exact_result(i * step),
+                                    exact_result_derivative( i * step)
+                            });
+        }
+        if( solver.is_accuracy_reached( step*step ) ){
+            break;
+        } else {
+            std::cout << solver.get_solution_error() << "\t" << solver.get_current_angle() << std::endl;
+            solver.restart( solver.get_new_angle() );
+            counter++;
+        }
+    } while ( true );
+    std::ofstream output("../../results/test/test_second2.dat", std::ios_base::trunc);
+    for( auto& x : data) {
+        output << x[0]
+               << "\t" << x[1] << "\t" << x[2] << "\t" << x[3] << "\t" << x[4]
+               << "\t\t" << x[5]
+               << "\t" << x[6]
+               << "\n";
+    }
+    output.flush();
+    output.close();
+    std::cout << "shots : " << counter << "\t" << "angle : " << solver.get_current_angle() << std::endl;
+};
+void second_task() {
+    using namespace Numerical_methods;
+
+    constexpr int precision_order = 4;
+    Butcher_table<precision_order - 1> table{
+            {{1.0 / 6, 0.0, -1.0 / 6},
+                      {1.0 / 12, 5.0 / 12, 0.0},
+                               {0.5, 1.0 / 3, 1.0 / 6}},
+            {1.0 / 6, 2.0 / 3, 1.0 / 6},
+            {0.0,     1.0 / 2, 1.0}
+    };
+    std::vector<double> coefficients = {3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24};
+    implicit_Runge_Kutta_method<vector<double>, precision_order - 1, precision_order> impl_rkm_method{};
+    impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method<vector<double>, precision_order> impl_msm_solver{};
+    impl_msm_solver.set_starting_method(impl_rkm_method);
+    impl_msm_solver.set_coefficients(coefficients);
+
+    implicit_Runge_Kutta_method<vector<double>, precision_order - 1, precision_order> another_impl_rkm_method{};
+    another_impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method<vector<double>, precision_order> another_impl_msm_solver{};
+    another_impl_msm_solver.set_starting_method(another_impl_rkm_method);
+    another_impl_msm_solver.set_coefficients(coefficients);
+
+    const auto lambda = [](double x, double y) -> double {
+        return y*y*y;
+    };
+    const auto f = [](double x, double y) -> double {
+        return -x*y*y*y*y;
+    };
+    const auto q = [lambda](double x, double y, double y1) -> double {
+        return -lambda(x, y) * y1;
+    };
+
+    const boundary_conditions<double> conditions{0.0, 1.0, 0.0, 1.0};
+
+    constexpr double step = 0.000'01;
+    shooting_method<double> solver(
+            [](double x, const double &y, const double &y1) -> double {
+                return 4.0*x*y;
+            },
+            [](double x, const double &y, const double &y1) -> double {
+                return 4.0*x;
+            },
+            [](double x, const double &y, const double &y1) -> double {
+                return 0.0;
+            },
+            conditions,
+            3.0,
+            step,
+            impl_msm_solver,
+            another_impl_msm_solver
+    );
+    const int steps_amount = (conditions.right_border - conditions.left_border) / step;
+    int counter = 1;
+
+    std::ofstream shooting_parameters("../../results/second/shooting_parameters.dat", std::ios_base::trunc);
+    std::vector<std::vector<double>> data{};
+    do {
+        data.clear();
+        double my_y{0.0};
+        double my_y1{0.0};
+        double y{0.0};
+        double y1{0.0};
+        double Y{0.0};
+        double U{0.0};
+        for (int i = 0; i <= steps_amount; ++i) {
+            const double x = i * step;
+            if (i == 0) {
+                my_y = solver.conditions.left_value;
+                my_y1 = solver.get_current_angle();
+                Y = 0.0;
+                U = 1.0;
+            } else {
+                const auto result = solver.get_next_step();
+                my_y = result[0].solution[0];
+                my_y1 = result[0].solution[1];
+                Y = result[1].solution[0];
+                U = result[1].solution[1];
+            }
+            y = std::sqrt( std::sqrt( my_y));
+            y1 = my_y1 / ( 4.0 * y * y * y);
+            data.push_back({
+                                   x,
+                                   y,
+                                   y1,
+                                   q( x, y, y1),
+                                   lambda( x, y),
+                                   f( x, y),
+                                   Y,
+                                   U
+                           });
+        }
+
+        if (solver.is_accuracy_reached(step * step)) {
+            shooting_parameters << counter << "\t" << solver.get_current_angle() << std::endl;
+            break;
+        } else {
+            shooting_parameters << counter << "\t" << solver.get_current_angle() << std::endl;
+            std::cout << solver.get_solution_error() << "\t" << solver.get_current_angle() << std::endl;
+            solver.restart(solver.get_new_angle());
+            counter++;
+        }
+    } while (true);
+
+    shooting_parameters.flush();
+    shooting_parameters.close();
+
+    std::ofstream output("../../results/second/second.dat", std::ios_base::trunc);
+    for (auto &value : data) {
+        output << value[0]
+               << "\t" << value[1] << "\t" << value[2] << "\t" << value[3] << "\t" << value[4]
+               << "\t" << value[5]
+               << "\t\t" << value[6] << "\t" << value[7]
+               << "\n";
+    }
+    output.flush();
+    output.close();
+    std::cout << "shots : " << counter << "\t" << "final angle : " << solver.get_current_angle() << std::endl;
+};
+int main() {
+    //Numerical_methods::test();
+    //harmonic();
+    //first_task();
+    //second_task_test1();
+    //second_task_test2();
+    second_task();
     return 0;
-}
+};

@@ -11,6 +11,14 @@
 
 namespace Numerical_methods {
 
+    template<solution_element_t solution_t>
+    struct boundary_conditions{
+        const solution_t left_value;
+        const solution_t right_value;
+        const double left_border;
+        const double right_border;
+    };
+
     template<
             solution_element_t solution_t,
             std::size_t precision_order = 4,
@@ -32,67 +40,45 @@ namespace Numerical_methods {
         solution_t get_current_angle(){
             return current_angle;
         }
-
-        const struct boundary_conditions{
-            const solution_t& left_value;
-            const solution_t& right_value;
-            const double left_border;
-            const double right_border;
-        } conditions;
+        const boundary_conditions<solution_t>& conditions;
 
         shooting_method( const function_t& function_,
                          const function_t& function_derivative_y_,
                          const function_t& function_derivative_u_,
-                         const boundary_conditions& boundary_values,
+                         const boundary_conditions<solution_t>& boundary_values,
                          const solution_t& initial_angle,
-                         double step_size )
+                         double step_size,
+                         solver_t<>& main_solver,
+                         solver_t<>& additional_solver )
                          : function(function_),
                            function_derivative_y(function_derivative_y_),
                            function_derivative_u(function_derivative_u_),
                            conditions(boundary_values),
                            current_angle(initial_angle),
-                           step(step_size) {
+                           step(step_size),
+                           ode_solver(main_solver),
+                           ode_solver_for_s_derivative(additional_solver){
 
-            ///only works for default template template parameter!!!
-                //constexpr int precision_order = 4;
-                Butcher_table<3> table{
-                        {{1.0 / 6, 0.0, -1.0 / 6},
-                                  {1.0 / 12, 5.0 / 12, 0.0},
-                                           {0.5, 1.0 / 3, 1.0 / 6}},
-                        {1.0 / 6, 2.0 / 3, 1.0 / 6},
-                        {0.0,     1.0 / 2, 1.0}
-                };
-                implicit_Runge_Kutta_method<vector<double>, precision_order-1, precision_order> impl_rkm_method{};
-                impl_rkm_method.set_Butcher_table(table);
-
-                ode_solver.set_starting_method(impl_rkm_method);
-                ode_solver.set_coefficients({3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24});
-
-                Butcher_table<3> another_table{
-                        {{1.0 / 6, 0.0, -1.0 / 6},
-                                  {1.0 / 12, 5.0 / 12, 0.0},
-                                           {0.5, 1.0 / 3, 1.0 / 6}},
-                        {1.0 / 6, 2.0 / 3, 1.0 / 6},
-                        {0.0,     1.0 / 2, 1.0}
-                };
-                implicit_Runge_Kutta_method<vector<double>, precision_order-1, precision_order> another_impl_rkm_method{};
-                impl_rkm_method.set_Butcher_table(table);
-
-                ode_solver_for_s_derivative.set_starting_method(another_impl_rkm_method);
-                ode_solver_for_s_derivative.set_coefficients({3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24});
-            ///only works for default template template parameter!!!
 
             ode_solver.set_initial_conditions( {conditions.left_value, current_angle} );
-            ode_solver.set_function(
-                    [this]( const vector<solution_t>& old_solution, double x ) -> vector<solution_t>
-                    {
-                        assert( old_solution.size() == 2);
-                        return { old_solution[1], function(x, old_solution[0], old_solution[1]) };
-                    } );
+            auto func = [this]( const vector<solution_t>& old_solution, double x ) -> vector<solution_t>
+            {
+                assert( old_solution.size() == 2);
+                return { old_solution[1], this->function(x, old_solution[0], old_solution[1]) };
+            };
+            ode_solver.set_function( func );
             ode_solver.set_time( conditions.left_border );
+            if constexpr ( precision_order != 1){
+                ode_solver.starting_method->set_initial_conditions( {conditions.left_value, current_angle} );
+                ode_solver.starting_method->set_function( func );
+                ode_solver.starting_method->set_time( conditions.left_border );
+            }
 
             if constexpr ( std::is_same_v<solution_t,double> ) {
-                ode_solver_for_s_derivative.set_initial_conditions( {0.0,1.0});
+                ode_solver_for_s_derivative.set_initial_conditions( {0.0, 1.0});
+                if constexpr ( precision_order != 1) {
+                    ode_solver_for_s_derivative.starting_method->set_initial_conditions({0.0, 1.0});
+                }
             } else {
                 solution_t first = conditions.left_value;
                 for( auto &x : first) {
@@ -103,106 +89,128 @@ namespace Numerical_methods {
                     second = 1.0;
                 }
                 ode_solver_for_s_derivative.set_initial_conditions( {first,second});
+                if constexpr ( precision_order != 1){
+                    ode_solver_for_s_derivative.starting_method->set_initial_conditions( {first,second} );
+                }
             }
-
             ode_solver_for_s_derivative.set_time( conditions.left_border);
+            if constexpr ( precision_order != 1){
+                ode_solver_for_s_derivative.starting_method->set_time( conditions.left_border);
+            }
         }
 
-        return_t<vector<solution_t>> get_next_step() {
+        std::vector<return_t<vector<solution_t>>> get_next_step() {
+
+            bool have_starting_method = false;
+            if constexpr( precision_order != 1){
+                have_starting_method = true;
+            }
+
+            const auto time = ode_solver.get_time();
             assert( ode_solver.get_time() + step < conditions.right_border + std::numeric_limits<double>::epsilon()*10'000);
-            auto result = ode_solver.get_next_step( step );
+
             if( ode_solver.buffer_is_filled() ) {
-                auto last_elements = ode_solver.get_buffer_state();
-                const auto current_solution = result.solution;
-                ode_solver_for_s_derivative.set_function(
-                        [this, &last_elements, &current_solution]
+                const auto last_elements = ode_solver.get_buffer_state();
+
+                ode_solver_for_s_derivative.set_function
+                (
+                        [this, last_elements, time]
                                 (const vector<solution_t> &old_solution, double x) -> vector<solution_t>
                                         {
                             assert(old_solution.size() == 2);
-                            assert(std::abs(ode_solver.get_time() / step - x / step) <=
+                            assert(std::abs( time - x) / step <
                                    std::numeric_limits<double>::epsilon() * 10'000 + ode_solver.size());
-
-                            if (std::abs(x - ode_solver.get_time()) <
-                                std::numeric_limits<double>::epsilon() * 10'000) {
-                                return {old_solution[1],
-                                        function_derivative_y(x, current_solution[0], current_solution[1]) *
-                                        old_solution[0] +
-                                        function_derivative_u(x, current_solution[0], current_solution[1]) *
-                                        old_solution[1]};
-                            } else {
-                                const int idx = std::round(std::abs(ode_solver.get_time() / step - x / step)) - 1;
-                                return {old_solution[1],
+                            const int idx = std::round(std::abs(time / step - x / step));
+                            return {    old_solution[1],
                                         function_derivative_y(x, last_elements[idx][0], last_elements[idx][1]) *
                                         old_solution[0] +
                                         function_derivative_u(x, last_elements[idx][0], last_elements[idx][1]) *
                                         old_solution[1]};
-                            }
                         }
+
                 );
             } else {
-                auto last_element = ode_solver.get_last_element();
-                ode_solver_for_s_derivative.set_function(
-                        [this, &last_element]
+                const auto last_element = ode_solver.get_last_element();
+                auto func =
+                        [this, last_element]
                                 (const vector<solution_t> &old_solution, double x) -> vector<solution_t>
                         {
                             assert(old_solution.size() == 2);
-                            assert(std::abs(ode_solver.get_time() / step - x / step) <=
-                                   std::numeric_limits<double>::epsilon() * 10'000 + ode_solver.size());
 
                             return {    old_solution[1],
                                         function_derivative_y( x, last_element[0], last_element[1]) *
                                         old_solution[0] +
                                         function_derivative_u( x, last_element[0], last_element[1]) *
                                         old_solution[1]};
-                        }
-                );
+                        };
+                ode_solver_for_s_derivative.set_function( func );
+                if(have_starting_method){
+                    ode_solver_for_s_derivative.starting_method->set_function( func );
+                }
             }
-            auto need_to_make_a_step = ode_solver_for_s_derivative.get_next_step( step);
+            const auto result = ode_solver.get_next_step( step );
+            const auto another_result = ode_solver_for_s_derivative.get_next_step( step);
+            return {result, another_result};
+        }
+
+        [[nodiscard]] bool is_accuracy_reached( double epsilon = 0.000'1) {
+            return std::abs(ode_solver.get_last_element()[0] - conditions.right_value) < epsilon;
+        }
+
+        solution_t get_new_angle() {
+            const auto right_border_result = ode_solver.get_last_element();
+            const auto result = current_angle
+                                - inverse(ode_solver_for_s_derivative.get_last_element()[0])
+                                * ( right_border_result[0] - conditions.right_value );
             return result;
         }
 
-        solution_t get_new_angle(){
-            return current_angle
-                    - inverse(ode_solver_for_s_derivative.get_buffer_state()[0])
-                    * ode_solver.get_buffer_state()[0]
-                    - conditions.right_value;
+        auto get_solution_error(){
+            return ode_solver.get_last_element()[0] - conditions.right_value;
         }
 
-        double get_solution_error(){
-            return ode_solver.get_buffer_state()[0] - conditions.right_value;
-        }
-
-        void restart( const solution_t& angle ){
+        void restart( const solution_t& angle ) {
             current_angle = angle;
-            auto new_ode_solver = decltype(ode_solver)();
-            auto new_ode_s_solver = decltype(ode_solver_for_s_derivative)();
-            ode_solver = new_ode_solver;
-            ode_solver_for_s_derivative = new_ode_s_solver;
 
-            ode_solver.set_initial_conditions( {conditions.left_value, current_angle} );
-            ode_solver.set_function(
-                    [this]( const vector<solution_t>& old_solution, double x ) -> vector<solution_t>
-                    {
-                        assert( old_solution.size() == 2);
-                        return { old_solution[1], function(x, old_solution[0], old_solution[1]) };
-                    } );
-            ode_solver.set_time( conditions.left_border );
+            ode_solver.clear_buffer();
+            ode_solver_for_s_derivative.clear_buffer();
 
-            if constexpr ( std::is_same_v<solution_t,double> ) {
-                ode_solver_for_s_derivative.set_initial_conditions( {0.0,1.0});
+            ode_solver.set_initial_conditions({conditions.left_value, current_angle});
+            auto func = [this](const vector<solution_t> &old_solution, double x) -> vector<solution_t> {
+                assert(old_solution.size() == 2);
+                return {old_solution[1], this->function(x, old_solution[0], old_solution[1])};
+            };
+            ode_solver.set_function(func);
+            ode_solver.set_time(conditions.left_border);
+            if constexpr (precision_order != 1) {
+                ode_solver.starting_method->set_initial_conditions({conditions.left_value, current_angle});
+                ode_solver.starting_method->set_function(func);
+                ode_solver.starting_method->set_time(conditions.left_border);
+            }
+
+            if constexpr (std::is_same_v<solution_t, double>) {
+                ode_solver_for_s_derivative.set_initial_conditions({0.0, 1.0});
+                if constexpr (precision_order != 1) {
+                    ode_solver_for_s_derivative.starting_method->set_initial_conditions({0.0, 1.0});
+                }
             } else {
                 solution_t first = conditions.left_value;
-                for( auto &x : first) {
+                for (auto &x : first) {
                     first = 0.0;
                 }
                 solution_t second = conditions.left_value;
-                for( auto &x : second) {
+                for (auto &x : second) {
                     second = 1.0;
                 }
-                ode_solver_for_s_derivative.set_initial_conditions( {first,second});
+                ode_solver_for_s_derivative.set_initial_conditions({first, second});
+                if constexpr (precision_order != 1) {
+                    ode_solver_for_s_derivative.starting_method->set_initial_conditions({first, second});
+                }
             }
-
-            ode_solver_for_s_derivative.set_time( conditions.left_border);
+            ode_solver_for_s_derivative.set_time(conditions.left_border);
+            if constexpr (precision_order != 1) {
+                ode_solver_for_s_derivative.starting_method->set_time(conditions.left_border);
+            }
         }
     };
 }

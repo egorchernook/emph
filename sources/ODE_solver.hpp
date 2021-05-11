@@ -21,16 +21,20 @@ namespace Numerical_methods{
         double time = 0.0;
         solution_t initial_conditions;
     public:
-        auto get_buffer_state() {
+        auto get_buffer_state()  {
             return buffer.current_state();
         }
-        bool buffer_is_filled(){
+        void clear_buffer(){
+            buffer.clear();
+        }
+        [[nodiscard]] bool buffer_is_filled()  {
             return buffer.is_filled();
         }
-        auto get_last_element(){
+        auto get_last_element()  {
             return buffer.first();
         }
         ODE_solver() : buffer(ring_buffer<solution_t, buffer_size>()) {}
+
         void set_initial_conditions(const solution_t &initial_conditions_) {
             initial_conditions = initial_conditions_;
             buffer.push( initial_conditions );
@@ -38,6 +42,7 @@ namespace Numerical_methods{
         void set_function( const function_t& function_ ) {
             function = function_;
         }
+
         void set_time( double time_ ) {
             time = time_;
         }
@@ -53,9 +58,7 @@ namespace Numerical_methods{
                 {
             buffer.push( initial_conditions );
         }
-        [[nodiscard]] double current_time() const noexcept {
-            return time;
-        }
+
         return_t<solution_t> get_next_step( double step ) {
             time += step;
             return this->get_next_step_impl( step, time );
@@ -93,6 +96,7 @@ namespace Numerical_methods{
             ODE_solver<solution_t, 1>::buffer.push( next_value );
             return result;
         }
+
     };
 
     template<solution_t_concept solution_t, std::size_t number_of_steps>
@@ -105,8 +109,10 @@ namespace Numerical_methods{
         using ODE_solver<solution_t, number_of_steps - 1>::function;
         void set_starting_method( one_step_solver<solution_t>& method ){
             starting_method = &method;
+            /*
             starting_method->set_initial_conditions( ODE_solver<solution_t, number_of_steps - 1>::initial_conditions );
             starting_method->set_function( ODE_solver<solution_t, number_of_steps - 1>::function);
+             */
         };
         return_t<solution_t> make_step (
                 const initial_state_t &initial_state,

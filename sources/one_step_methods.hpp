@@ -8,6 +8,7 @@
 
 #include "solution_t_concept.hpp"
 #include "vector.hpp"
+#include "matrix.hpp"
 #include "SNAE_solver.hpp"
 #include "ODE_solver.hpp"
 
@@ -62,6 +63,7 @@ namespace Numerical_methods{
         using typename one_step_solver<solution_t>::initial_state_t;
         using one_step_solver<solution_t>::one_step_solver;
         using one_step_solver<solution_t>::function;
+
         void set_Butcher_table( Butcher_table<number_of_stages>& table ) {
             for( int i = 0; i < table.a_matrix.height(); ++i) {
                 for( int j = i; j < table.a_matrix.width(); ++j) {
@@ -92,7 +94,8 @@ namespace Numerical_methods{
 
             vector<solution_t> k_vector( number_of_stages, initial_state);
 
-            auto snae_function = [&]( const vector<solution_t>& old_solution ) noexcept -> vector<solution_t> {
+            auto snae_function = [this, &initial_state, &time, &step]
+                    ( const vector<solution_t>& old_solution ) noexcept -> vector<solution_t> {
                 vector<solution_t> result = old_solution;
                 for (int idx = 0; idx < old_solution.size(); ++idx) {
                     solution_t solution_increments = butcher_table_ptr->a_matrix[idx][0] * old_solution[0];
@@ -108,7 +111,7 @@ namespace Numerical_methods{
 
             auto solver = Implicit< vector<solution_t> >::create_SNAE_solver();
 
-            return_t< vector<solution_t> > k_vector_result = solver.solve( k_vector, snae_function );
+            const auto k_vector_result = solver.solve( k_vector, snae_function );
 
             k_vector = k_vector_result.solution;
 

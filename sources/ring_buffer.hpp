@@ -18,9 +18,7 @@ namespace Numerical_methods {
         bool full = false;
     public:
 
-        ring_buffer() : data() {
-            data.reserve(elements_amount);
-        }
+        ring_buffer() : data( base_container_t() ) {}
 
         ring_buffer(const base_container_t &_container, std::size_t _start = 0, bool _full = false) :
                 data(_container),
@@ -72,6 +70,12 @@ namespace Numerical_methods {
 
         [[nodiscard]] bool is_filled() const noexcept {
             return full;
+        }
+
+        void clear(){
+            data.clear();
+            start = 0;
+            full = false;
         }
     };
 }

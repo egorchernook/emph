@@ -58,6 +58,14 @@ namespace Numerical_methods {
             }
             return *this;
         }
+
+        vector<T> &operator*=(const vector<T>& another) {
+            assert( this->size() == another.size() );
+            for (std::size_t idx = 0; idx < this->size(); idx++) {
+                this->at(idx) *= another[idx];
+            }
+            return *this;
+        }
     };
 
     template<solution_element_t T>
@@ -125,6 +133,20 @@ namespace Numerical_methods {
     }
 
     template<solution_element_t T>
+    vector<T> operator*(
+            const vector<T> &lhs,
+            const vector<T> &rhs) {
+
+        assert( lhs.size() == rhs.size() );
+        vector<T> result;
+        for (std::size_t idx = 0; idx < lhs.size(); idx++) {
+            result.push_back(lhs[idx] * rhs[idx]);
+        }
+        return result;
+    }
+
+
+    template<solution_element_t T>
     vector<T> inverse( const vector<T> &initial){
         vector<T> result = initial;
         for( auto &x : result){
@@ -135,6 +157,8 @@ namespace Numerical_methods {
 
     template<>
     vector<double> inverse<double>( const vector<double> &initial);
+
+    double inverse( double initial);
 }
 
 #endif //MAIN_CPP_VECTOR_HPP

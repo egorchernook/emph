@@ -23,6 +23,13 @@ bool Numerical_methods::one_step_methods_tests::Runge_Kutta_method_test() {
         initial_state,
         one_step_methods_tests::harmonic_oscillator_function };
     impl_rkm_method.set_Butcher_table( table);
+
+    implicit_Runge_Kutta_method< vector<double>, 3, precision_order > another_impl_rkm_method{};
+    another_impl_rkm_method.set_Butcher_table(table);
+    another_impl_rkm_method.set_function( one_step_methods_tests::harmonic_oscillator_function);
+    auto initial_state1 = initial_state;
+    another_impl_rkm_method.set_initial_conditions( initial_state);
+    another_impl_rkm_method.set_time( 0.0);
     bool result = true;
     double time = 0.0;
     const double step = 0.000'1;
@@ -31,14 +38,23 @@ bool Numerical_methods::one_step_methods_tests::Runge_Kutta_method_test() {
                 initial_state,
                 step,
                 time);
+        auto another_current_solution = another_impl_rkm_method.make_step(
+                initial_state1,
+                step,
+                time);
         const double x = current_solution.solution[0];
         const double y = current_solution.solution[1];
+        const double x1 = current_solution.solution[0];
+        const double y1 = current_solution.solution[1];
         if (std::abs(x - std::sin(time + step)) > step ||
-            std::abs(y - std::cos(time + step)) > step ){
+            std::abs(y - std::cos(time + step)) > step ||
+            std::abs(x1 - std::sin(time + step)) > step ||
+            std::abs(y1 - std::cos(time + step)) > step){
             result = false;
         }
         time += step;
         initial_state = { x, y};
+        initial_state1 = { x1, y1};
     }
     return result;
 }
