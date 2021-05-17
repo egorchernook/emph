@@ -179,7 +179,7 @@ void second_task_test1(){
         return c1*cos(x) - c2*sin(x);
     };
 
-    const boundary_conditions<double> conditions{ 1.0, exact_result(10), 0.0, 10.0};
+    const boundary_conditions_for_shooting_method<double> conditions{1.0, exact_result(10), 0.0, 10.0};
 
     constexpr double step = 0.000'1;
     shooting_method<double> solver(
@@ -240,7 +240,7 @@ void second_task_test1(){
             counter++;
         }
     } while ( true );
-    std::ofstream output("../../results/test/test_second1.dat", std::ios_base::trunc);
+    std::ofstream output("../../results/test/test_second1_test.dat", std::ios_base::trunc);
     for( auto& x : data) {
         output << x[0]
                << "\t" << x[1] << "\t" << x[2] << "\t" << x[3] << "\t" << x[4]
@@ -293,7 +293,7 @@ void second_task_test2(){
         return c1*ch(x) + c2*sh(x);
     };
 
-    const boundary_conditions<double> conditions{ 1.0, exact_result(10), 0.0, 10.0};
+    const boundary_conditions_for_shooting_method<double> conditions{1.0, exact_result(10), 0.0, 10.0};
 
     constexpr double step = 0.000'1;
     shooting_method<double> solver(
@@ -402,18 +402,37 @@ void second_task() {
         return -lambda(x, y) * y1;
     };
 
-    const boundary_conditions<double> conditions{0.0, 1.0, 0.0, 1.0};
+    const boundary_conditions_for_shooting_method<double> conditions{0.0, 1.0, 0.0, 1.0};
 
-    constexpr double step = 0.000'01;
+    constexpr double step = 0.001;
+    constexpr double epsilon = step / 100;
     shooting_method<double> solver(
-            [](double x, const double &y, const double &y1) -> double {
-                return 4.0*x*y;
+            [epsilon](double x, const double &y, const double &y1) -> double {
+                double result{0.0};
+                if ( std::abs(y) < epsilon ){
+                    result = x * y + 3.0 * y1 * y1 / epsilon;
+                } else {
+                    result = x * y + 3.0 * y1 * y1 / y;
+                }
+                return result;
             },
-            [](double x, const double &y, const double &y1) -> double {
-                return 4.0*x;
+            [epsilon](double x, const double &y, const double &y1) -> double {
+                double result{0.0};
+                if ( std::abs(y * y) < epsilon ){
+                    result = x + 3.0 * y1 * y1 / epsilon;
+                } else {
+                    result = x * y + 3.0 * y1 * y1 / (y * y);
+                }
+                return result;
             },
-            [](double x, const double &y, const double &y1) -> double {
-                return 0.0;
+            [epsilon](double x, const double &y, const double &y1) -> double {
+                double result{0.0};
+                if ( std::abs(y) < epsilon ) {
+                    result = -6.0 * y1 / epsilon;
+                } else {
+                    result = -6.0 * y1 / y;
+                }
+                return result;
             },
             conditions,
             3.0,
@@ -425,11 +444,8 @@ void second_task() {
     int counter = 1;
 
     std::ofstream shooting_parameters("../../results/second/shooting_parameters.dat", std::ios_base::trunc);
-    std::vector<std::vector<double>> data{};
     do {
-        data.clear();
-        double my_y{0.0};
-        double my_y1{0.0};
+        std::ofstream output("../../results/second/second" + std::to_string(counter) + ".dat", std::ios_base::trunc);
         double y{0.0};
         double y1{0.0};
         double Y{0.0};
@@ -437,32 +453,27 @@ void second_task() {
         for (int i = 0; i <= steps_amount; ++i) {
             const double x = i * step;
             if (i == 0) {
-                my_y = solver.conditions.left_value;
-                my_y1 = solver.get_current_angle();
+                y = solver.conditions.left_value;
+                y1 = solver.get_current_angle();
                 Y = 0.0;
                 U = 1.0;
             } else {
                 const auto result = solver.get_next_step();
-                my_y = result[0].solution[0];
-                my_y1 = result[0].solution[1];
+                y = result[0].solution[0];
+                y1 = result[0].solution[1];
                 Y = result[1].solution[0];
                 U = result[1].solution[1];
             }
-            y = std::sqrt( std::sqrt( my_y));
-            y1 = my_y1 / ( 4.0 * y * y * y);
-            data.push_back({
-                                   x,
-                                   y,
-                                   y1,
-                                   q( x, y, y1),
-                                   lambda( x, y),
-                                   f( x, y),
-                                   Y,
-                                   U
-                           });
+            output  << x << "\t" << y << "\t" << y1 << "\t"
+                    << q( x, y, y1) << "\t" << lambda( x, y) << "\t" << f( x, y) << "\t\t"
+                    << Y << "\t" << U
+                    << std::endl;
         }
 
-        if (solver.is_accuracy_reached(step * step)) {
+        output.flush();
+        output.close();
+
+        if (solver.is_accuracy_reached(step/100)) {
             shooting_parameters << counter << "\t" << solver.get_current_angle() << std::endl;
             break;
         } else {
@@ -471,29 +482,20 @@ void second_task() {
             solver.restart(solver.get_new_angle());
             counter++;
         }
-    } while (true);
+    } while (false);
 
     shooting_parameters.flush();
     shooting_parameters.close();
 
-    std::ofstream output("../../results/second/second.dat", std::ios_base::trunc);
-    for (auto &value : data) {
-        output << value[0]
-               << "\t" << value[1] << "\t" << value[2] << "\t" << value[3] << "\t" << value[4]
-               << "\t" << value[5]
-               << "\t\t" << value[6] << "\t" << value[7]
-               << "\n";
-    }
-    output.flush();
-    output.close();
     std::cout << "shots : " << counter << "\t" << "final angle : " << solver.get_current_angle() << std::endl;
 };
+
 int main() {
-    //Numerical_methods::test();
+    Numerical_methods::test();
     //harmonic();
     //first_task();
     //second_task_test1();
     //second_task_test2();
-    second_task();
+    //second_task();
     return 0;
 };

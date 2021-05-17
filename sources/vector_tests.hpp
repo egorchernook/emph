@@ -8,6 +8,8 @@ namespace Numerical_methods {
     public:
         vector_tests();
 
+        static bool constructor_with_default_value_test();
+
         static bool addition_assignment_test();
 
         static bool subtraction_assignment_test();

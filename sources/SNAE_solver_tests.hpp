@@ -13,11 +13,19 @@ namespace Numerical_methods {
             assert( input_data.size() == 2);
             return { 1 - input_data[1], 2.0/5 + input_data[0] / 5 };
         }
+        static vector<double> test_equation_derivative_x(const vector<double> &input_data) noexcept {
+            assert( input_data.size() == 2);
+            return { 1.0, -1.0};
+        }
+        static vector<double> test_equation_derivative_y(const vector<double> &input_data) noexcept {
+            assert( input_data.size() == 2);
+            return { 1.0, 1.0};
+        }
     public:
         SNAE_solver_tests();
         static bool test_fixed_point_iterations_method();
         static bool test_Seidels_method();
-        //static bool test_Newtons_method();
+        static bool test_Newtons_method();
     };
 }
 

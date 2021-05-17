@@ -5,6 +5,7 @@
 #include <limits>
 #include <functional>
 #include <memory>
+#include <cmath>
 
 #include "solution_t_concept.hpp"
 #include "vector.hpp"
@@ -18,15 +19,16 @@ namespace Numerical_methods{
     struct Butcher_table {
         vector<double> c_vector;
         vector<double> b_vector;
-        matrix<double,number_of_stages> a_matrix;
+        matrix<double> a_matrix;
         Butcher_table(
-                const matrix<double, number_of_stages> &matrix_a,
+                const matrix<double> &matrix_a,
                 const vector<double> &vector_b,
                 const vector<double> &vector_c ) :
                     c_vector(vector_c),
                     b_vector(vector_b),
                     a_matrix(matrix_a)
                 {
+            assert( matrix_a.height() == number_of_stages);
             assert( vector_c.size() == vector_b.size() );
             assert( matrix_a.height() == matrix_a.width() );
             assert( vector_c.size() == matrix_a.height() );
@@ -41,13 +43,14 @@ namespace Numerical_methods{
         using Butcher_table<number_of_stages>::a_matrix;
 
         extended_Butcher_table(
-                const matrix<double, number_of_stages> &matrix_a,
+                const matrix<double> &matrix_a,
                 const vector<double> &vector_b,
                 const vector<double> &vector_c,
                 const vector<double> &vector_b2) :
                 Butcher_table<number_of_stages>( matrix_a, vector_b, vector_c),
                 extra_b_vector(vector_b2)
         {
+            assert( matrix_a.height() == number_of_stages);
             assert( vector_c.size() == vector_b.size() );
             assert( matrix_a.height() == matrix_a.width() );
             assert( vector_c.size() == matrix_a.height() );
@@ -109,9 +112,9 @@ namespace Numerical_methods{
                 return result;
             };
 
-            auto solver = Implicit< vector<solution_t> >::create_SNAE_solver();
+            auto solver = Implicit< vector<solution_t> >::create_SNAE_solver(snae_function);
 
-            const auto k_vector_result = solver.solve( k_vector, snae_function );
+            const auto k_vector_result = solver.solve( k_vector);
 
             k_vector = k_vector_result.solution;
 

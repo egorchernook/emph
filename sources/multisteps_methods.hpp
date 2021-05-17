@@ -60,9 +60,9 @@ namespace Numerical_methods{
                         return step * beta_zero * function( solution, time) + constant_part;
             };
 
-            auto solver = Implicit<solution_t>::create_SNAE_solver();
+            auto solver = Implicit<solution_t>::create_SNAE_solver(right_part_function);
 
-            return_t<solution_t> result = solver.solve( initial_state[0] , right_part_function );
+            return_t<solution_t> result = solver.solve( initial_state[0] );
             return result;
         }
     };

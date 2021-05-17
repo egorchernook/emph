@@ -7,7 +7,9 @@ namespace Numerical_methods {
 
     double max(double arg);
     double min(double arg);
+    double lowest(double arg);
     double abs(double arg);
+    std::size_t size( double);
 
     template<typename T>
     concept sequence_container = requires( T arg){
@@ -38,12 +40,28 @@ namespace Numerical_methods {
     }
 
     template<sequence_container Class>
+    double lowest(const Class &arg) {
+        double result = lowest(arg[0]);
+        for (int i = 0; i < arg.size(); ++i){
+            if( abs(result) > abs(lowest(arg[i]))){
+                result = lowest(arg[i]);
+            }
+        }
+        return result;
+    }
+
+    template<sequence_container Class>
     Class abs(const Class &arg) {
         Class result = arg;
         for (int i = 0; i < arg.size(); ++i) {
             result[i] = abs(arg[i]);
         }
         return result;
+    }
+
+    template<sequence_container Class>
+    std::size_t size( const Class &arg){
+        return arg.size();
     }
 }
 

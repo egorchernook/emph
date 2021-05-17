@@ -4,6 +4,8 @@
 
 Numerical_methods::vector_tests::vector_tests() {
     std::cout << std::endl << "\ttesting vector class..." << std::endl;
+    assert( constructor_with_default_value_test() );
+    std::cout << "\t\tconstructor with default value works" << std::endl;
     assert( addition_assignment_test() );
     std::cout << "\t\taddition assignment works" << std::endl;
     assert( subtraction_assignment_test() );
@@ -19,6 +21,24 @@ Numerical_methods::vector_tests::vector_tests() {
     assert( multiplication_with_number_test() );
     std::cout << "\t\tmultiplication with a number works" << std::endl;
     assert( division_by_number_test() );
+}
+
+bool Numerical_methods::vector_tests::constructor_with_default_value_test(){
+    const Numerical_methods::vector<int> a(5, 1);
+    for( auto& x : a){
+        if ( x != 1 ){
+            return false;
+        }
+    }
+    const Numerical_methods::vector<vector<int>> b(5, 1);
+    for( auto& x : b){
+        for( auto& y : x) {
+            if (y != 1) {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool Numerical_methods::vector_tests::addition_assignment_test() {

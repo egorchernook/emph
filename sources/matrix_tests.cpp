@@ -42,10 +42,10 @@ bool Numerical_methods::matrix_tests::creation_tests() {
     matrix[1][0] = 1.32; matrix[1][1] = 1.55; matrix[1][2] = 1.58;
     matrix[2][0] = 2.09; matrix[2][1] = 2.25; matrix[2][2] = 2.34;
 
-    const Numerical_methods::matrix<double, size, size> a = { { 2.58 , 2.93 , 3.13 },
-                                                              { 1.32 , 1.55 , 1.58 },
-                                                              { 2.09 , 2.25 , 2.34 }  };
-    Numerical_methods::matrix<double, size, size> b;
+    const Numerical_methods::matrix<double> a = { { 2.58 , 2.93 , 3.13 },
+                                                  { 1.32 , 1.55 , 1.58 },
+                                                  { 2.09 , 2.25 , 2.34 }  };
+    Numerical_methods::matrix<double> b(size);
     b[0][0] = 2.58; b[0][1] = 2.93; b[0][2] = 3.13;
     b[1][0] = 1.32; b[1][1] = 1.55; b[1][2] = 1.58;
     b[2][0] = 2.09; b[2][1] = 2.25; b[2][2] = 2.34;
@@ -72,7 +72,7 @@ bool Numerical_methods::matrix_tests::creation_tests() {
 
 bool Numerical_methods::matrix_tests::two_parameters_at_test() {
     constexpr int size = 3;
-    const Numerical_methods::matrix<double, size, size> a{ 5.0 };
+    const Numerical_methods::matrix<double> a( 5.0, size );
     bool result = true;
     for(int i = 0; i < size; ++i){
         for(int j = 0; j < size; ++j){
@@ -86,8 +86,8 @@ bool Numerical_methods::matrix_tests::two_parameters_at_test() {
 
 bool Numerical_methods::matrix_tests::direct_assignment_test() {
     constexpr int size = 3;
-    const Numerical_methods::matrix<double, size, size> a{ 5.0 };
-    Numerical_methods::matrix<double, size, size> b{0.0};
+    const Numerical_methods::matrix<double> a( 5.0, size );
+    Numerical_methods::matrix<double> b(0.0, size);
     b = a;
     bool result = true;
     for(int i = 0; i < size; ++i){
@@ -102,7 +102,7 @@ bool Numerical_methods::matrix_tests::direct_assignment_test() {
 
 bool Numerical_methods::matrix_tests::addition_assignment_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 5.0 };
+    Numerical_methods::matrix<double> a( 5.0, size);
     a += {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     bool result = true;
     for(int i = 0; i < size; ++i){
@@ -117,7 +117,7 @@ bool Numerical_methods::matrix_tests::addition_assignment_test() {
 
 bool Numerical_methods::matrix_tests::subtraction_assignment_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 5.0 };
+    Numerical_methods::matrix<double> a( 5.0, size );
     a -= {{1.0,1.0,1.0},{1.0,1.0,1.0},{1.0,1.0,1.0}};
     bool result = true;
     for(int i = 0; i < size; ++i){
@@ -132,7 +132,7 @@ bool Numerical_methods::matrix_tests::subtraction_assignment_test() {
 
 bool Numerical_methods::matrix_tests::multiplication_with_number_assignment_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 5.0 };
+    Numerical_methods::matrix<double> a( 5.0, size);
     a *= 2.0;
     bool result = true;
     for(int i = 0; i < size; ++i){
@@ -147,7 +147,7 @@ bool Numerical_methods::matrix_tests::multiplication_with_number_assignment_test
 
 bool Numerical_methods::matrix_tests::division_by_number_assignment_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 10.0 };
+    Numerical_methods::matrix<double> a( 10.0, size);
     a /= 5.0;
     bool result = true;
     for(int i = 0; i < size; ++i){
@@ -163,13 +163,13 @@ bool Numerical_methods::matrix_tests::division_by_number_assignment_test() {
 bool Numerical_methods::matrix_tests::two_matrix_multiplication_test() {
     constexpr int height = 2;
     constexpr int width = 3;
-    const matrix<double, height, width> lhs = { { 1.0, 2.0, 3.0 },
-                                                { 1.0, 2.0, 3.0} };
-    const matrix<double, width, height> rhs = { { 1.0, 2.0} ,
-                                                { 1.0, 2.0} ,
-                                                { 1.0, 2.0} };
-    const matrix<double, height, height> right_answer = { { 6.0, 12.0 },
-                                                          { 6.0, 12.0 } };
+    const matrix<double> lhs = { { 1.0, 2.0, 3.0 },
+                                 { 1.0, 2.0, 3.0} };
+    const matrix<double> rhs = { { 1.0, 2.0} ,
+                                 { 1.0, 2.0} ,
+                                 { 1.0, 2.0} };
+    const matrix<double> right_answer = { { 6.0, 12.0 },
+                                          { 6.0, 12.0 } };
     const auto answer = lhs * rhs;
     bool result = true;
     for(int i = 0; i < height; ++i){
@@ -186,9 +186,9 @@ bool Numerical_methods::matrix_tests::two_matrix_multiplication_test() {
 bool Numerical_methods::matrix_tests::inverse_Gauss_test() {
     constexpr int size = 3;
     constexpr double error = 0.001;
-    const Numerical_methods::matrix<double, size, size> a = { { 2.58, 2.93, 3.13 } ,
-                                                              { 1.32, 1.55, 1.58 } ,
-                                                              { 2.09, 2.25, 2.34 } };
+    const Numerical_methods::matrix<double> a = { { 2.58, 2.93, 3.13 } ,
+                                                  { 1.32, 1.55, 1.58 } ,
+                                                  { 2.09, 2.25, 2.34 } };
     auto c = inverse_Gauss(a);
 
     auto B = a * c;
@@ -211,8 +211,8 @@ bool Numerical_methods::matrix_tests::inverse_Gauss_test() {
 
 bool Numerical_methods::matrix_tests::addition_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 1.0 };
-    Numerical_methods::matrix<double, size, size> b{ 1.0 };
+    Numerical_methods::matrix<double> a( 1.0, size);
+    Numerical_methods::matrix<double> b( 1.0, size );
     auto c = a + b;
     bool result = true;
     for(int i = 0; i < size; ++i){
@@ -228,8 +228,8 @@ bool Numerical_methods::matrix_tests::addition_test() {
 
 bool Numerical_methods::matrix_tests::subtraction_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 3.0 };
-    Numerical_methods::matrix<double, size, size> b{ 1.0 };
+    Numerical_methods::matrix<double> a( 3.0, size);
+    Numerical_methods::matrix<double> b( 1.0, size);
     auto c = a - b;
     bool result = true;
     for(int i = 0; i < size; ++i){
@@ -245,7 +245,7 @@ bool Numerical_methods::matrix_tests::subtraction_test() {
 
 bool Numerical_methods::matrix_tests::multiplication_with_number_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 1.0 };
+    Numerical_methods::matrix<double> a(1.0, size);
     auto b = a * 2.0;
     auto c = 3.0 * a;
     bool result = true;
@@ -263,7 +263,7 @@ bool Numerical_methods::matrix_tests::multiplication_with_number_test() {
 
 bool Numerical_methods::matrix_tests::division_by_number_test() {
     constexpr int size = 3;
-    Numerical_methods::matrix<double, size, size> a{ 6.0 };
+    Numerical_methods::matrix<double> a( 6.0, size);
     auto b = a / 2.0;
     bool result = true;
     for(int i = 0; i < size; ++i){

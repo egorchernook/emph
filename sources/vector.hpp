@@ -23,6 +23,14 @@ namespace Numerical_methods {
         using std::vector<T>::front;
         using std::vector<T>::back;
 
+        template<std::integral value_t>
+        explicit vector( std::size_t count, value_t value = 0.0) : std::vector<T>(count) {
+            for( auto& x : *this){
+                const T val{value};
+                x = val;
+            }
+        }
+
         vector<T> &operator+=(const vector<T> &another) {
 
             assert(this->size() == another.size());
@@ -145,8 +153,7 @@ namespace Numerical_methods {
         return result;
     }
 
-
-    template<solution_element_t T>
+    template< solution_element_t T>
     vector<T> inverse( const vector<T> &initial){
         vector<T> result = initial;
         for( auto &x : result){

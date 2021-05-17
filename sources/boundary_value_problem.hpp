@@ -12,7 +12,7 @@
 namespace Numerical_methods {
 
     template<solution_element_t solution_t>
-    struct boundary_conditions{
+    struct boundary_conditions_for_shooting_method{
         const solution_t left_value;
         const solution_t right_value;
         const double left_border;
@@ -40,12 +40,12 @@ namespace Numerical_methods {
         solution_t get_current_angle(){
             return current_angle;
         }
-        const boundary_conditions<solution_t>& conditions;
+        const boundary_conditions_for_shooting_method<solution_t>& conditions;
 
         shooting_method( const function_t& function_,
                          const function_t& function_derivative_y_,
                          const function_t& function_derivative_u_,
-                         const boundary_conditions<solution_t>& boundary_values,
+                         const boundary_conditions_for_shooting_method<solution_t>& boundary_values,
                          const solution_t& initial_angle,
                          double step_size,
                          solver_t<>& main_solver,
@@ -68,44 +68,14 @@ namespace Numerical_methods {
             };
             ode_solver.set_function( func );
             ode_solver.set_time( conditions.left_border );
-            if constexpr ( precision_order != 1){
-                ode_solver.starting_method->set_initial_conditions( {conditions.left_value, current_angle} );
-                ode_solver.starting_method->set_function( func );
-                ode_solver.starting_method->set_time( conditions.left_border );
-            }
+            const solution_t first_initial_value{0.0};
+            const solution_t second_initial_value{1.0};
 
-            if constexpr ( std::is_same_v<solution_t,double> ) {
-                ode_solver_for_s_derivative.set_initial_conditions( {0.0, 1.0});
-                if constexpr ( precision_order != 1) {
-                    ode_solver_for_s_derivative.starting_method->set_initial_conditions({0.0, 1.0});
-                }
-            } else {
-                solution_t first = conditions.left_value;
-                for( auto &x : first) {
-                    first = 0.0;
-                }
-                solution_t second = conditions.left_value;
-                for( auto &x : second) {
-                    second = 1.0;
-                }
-                ode_solver_for_s_derivative.set_initial_conditions( {first,second});
-                if constexpr ( precision_order != 1){
-                    ode_solver_for_s_derivative.starting_method->set_initial_conditions( {first,second} );
-                }
-            }
+            ode_solver_for_s_derivative.set_initial_conditions( {first_initial_value, second_initial_value} );
             ode_solver_for_s_derivative.set_time( conditions.left_border);
-            if constexpr ( precision_order != 1){
-                ode_solver_for_s_derivative.starting_method->set_time( conditions.left_border);
-            }
         }
 
         std::vector<return_t<vector<solution_t>>> get_next_step() {
-
-            bool have_starting_method = false;
-            if constexpr( precision_order != 1){
-                have_starting_method = true;
-            }
-
             const auto time = ode_solver.get_time();
             assert( ode_solver.get_time() + step < conditions.right_border + std::numeric_limits<double>::epsilon()*10'000);
 
@@ -144,13 +114,10 @@ namespace Numerical_methods {
                                         old_solution[1]};
                         };
                 ode_solver_for_s_derivative.set_function( func );
-                if(have_starting_method){
-                    ode_solver_for_s_derivative.starting_method->set_function( func );
-                }
             }
-            const auto result = ode_solver.get_next_step( step );
-            const auto another_result = ode_solver_for_s_derivative.get_next_step( step);
-            return {result, another_result};
+            const auto main_result = ode_solver.get_next_step( step );
+            const auto sub_system_result = ode_solver_for_s_derivative.get_next_step( step);
+            return {main_result, sub_system_result};
         }
 
         [[nodiscard]] bool is_accuracy_reached( double epsilon = 0.000'1) {
@@ -175,42 +142,19 @@ namespace Numerical_methods {
             ode_solver.clear_buffer();
             ode_solver_for_s_derivative.clear_buffer();
 
-            ode_solver.set_initial_conditions({conditions.left_value, current_angle});
-            auto func = [this](const vector<solution_t> &old_solution, double x) -> vector<solution_t> {
-                assert(old_solution.size() == 2);
-                return {old_solution[1], this->function(x, old_solution[0], old_solution[1])};
+            ode_solver.set_initial_conditions( {conditions.left_value, current_angle} );
+            auto func = [this]( const vector<solution_t>& old_solution, double x ) -> vector<solution_t>
+            {
+                assert( old_solution.size() == 2);
+                return { old_solution[1], this->function(x, old_solution[0], old_solution[1]) };
             };
-            ode_solver.set_function(func);
-            ode_solver.set_time(conditions.left_border);
-            if constexpr (precision_order != 1) {
-                ode_solver.starting_method->set_initial_conditions({conditions.left_value, current_angle});
-                ode_solver.starting_method->set_function(func);
-                ode_solver.starting_method->set_time(conditions.left_border);
-            }
+            ode_solver.set_function( func );
+            ode_solver.set_time( conditions.left_border );
+            const solution_t first_initial_value{0.0};
+            const solution_t second_initial_value{1.0};
 
-            if constexpr (std::is_same_v<solution_t, double>) {
-                ode_solver_for_s_derivative.set_initial_conditions({0.0, 1.0});
-                if constexpr (precision_order != 1) {
-                    ode_solver_for_s_derivative.starting_method->set_initial_conditions({0.0, 1.0});
-                }
-            } else {
-                solution_t first = conditions.left_value;
-                for (auto &x : first) {
-                    first = 0.0;
-                }
-                solution_t second = conditions.left_value;
-                for (auto &x : second) {
-                    second = 1.0;
-                }
-                ode_solver_for_s_derivative.set_initial_conditions({first, second});
-                if constexpr (precision_order != 1) {
-                    ode_solver_for_s_derivative.starting_method->set_initial_conditions({first, second});
-                }
-            }
-            ode_solver_for_s_derivative.set_time(conditions.left_border);
-            if constexpr (precision_order != 1) {
-                ode_solver_for_s_derivative.starting_method->set_time(conditions.left_border);
-            }
+            ode_solver_for_s_derivative.set_initial_conditions( {first_initial_value, second_initial_value} );
+            ode_solver_for_s_derivative.set_time( conditions.left_border);
         }
     };
 }

@@ -10,9 +10,9 @@
 
 namespace Numerical_methods {
     inline void test() {
-        Numerical_methods::SNAE_solver_tests();
-        Numerical_methods::matrix_tests();
         Numerical_methods::vector_tests();
+        Numerical_methods::matrix_tests();
+        Numerical_methods::SNAE_solver_tests();
         Numerical_methods::ring_buffer_tests();
         Numerical_methods::one_step_methods_tests();
         Numerical_methods::multisteps_methods_tests();

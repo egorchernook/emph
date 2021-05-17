@@ -6,17 +6,18 @@
 
 namespace Numerical_methods {
 
-    template<solution_element_t T>
-    class base_matrix{};
-
-    template<solution_element_t value_t, std::size_t Height, std::size_t Width = Height>
-    class matrix : base_matrix<value_t>{
+    template<solution_element_t value_t>
+    class matrix {
     private:
         value_t ** data = nullptr;
-
+        std::size_t Height = 0;
+        std::size_t Width = 0;
     public:
-        explicit matrix(value_t value) {
+        matrix(value_t value, std::size_t height, std::size_t width = 0) : Height(height), Width(width){
 
+            if( width == 0){
+                Width = height;
+            }
             data = new value_t *[Height];
 
             for (int i = 0; i < Height; ++i) {
@@ -27,10 +28,13 @@ namespace Numerical_methods {
             }
         }
 
-        matrix(){
+        matrix( std::size_t height, std::size_t width = 0) : Height(height), Width(width) {
+            if( width == 0){
+                Width = height;
+            }
             data = new value_t *[Height];
             for (int i = 0; i < Height; ++i) {
-                data[i] = new(std::nothrow) value_t[Width];
+                data[i] = new value_t[Width];
             }
         }
 
@@ -50,6 +54,7 @@ namespace Numerical_methods {
                 const std::initializer_list<
                         std::initializer_list<
                                 value_t>> &list)
+                                : Height(list.size()), Width(list.begin()->size())
         {
             assert( Height == list.size());
             for (auto &x : list) {
@@ -63,10 +68,10 @@ namespace Numerical_methods {
             }
         }
 
-        matrix( const matrix& other){
+        matrix( const matrix& other) : Height(other.height()), Width(other.width()) {
             data = new value_t *[Height];
             for ( int i = 0; i < Height; i++){
-                data[i] = new(std::nothrow) value_t[Width];
+                data[i] = new value_t[Width];
                 for (int j = 0; j < Width; j++)
                     data[i][j] = other.data[i][j];
             }
@@ -99,17 +104,19 @@ namespace Numerical_methods {
         matrix& operator=(const matrix &other) {
             if (this == &other)
                 return *this;
-
-            for (int i = 0; i < Height; ++i) {
-                for (int j = 0; j < Width; ++j) {
-                    data[i][j] = other[i][j];
-                }
+            delete [] data;
+            Height = other.height();
+            Width = other.width();
+            data = new value_t *[Height];
+            for ( int i = 0; i < Height; i++){
+                data[i] = new value_t[Width];
+                for (int j = 0; j < Width; j++)
+                    data[i][j] = other.data[i][j];
             }
             return *this;
         }
 
-        matrix<value_t, Height, Width>& operator+=(const matrix <value_t, Height, Width> &another) {
-
+        matrix<value_t>& operator+=(const matrix <value_t> &another) {
             assert(this->height() == another.height());
             assert(this->width() == another.width());
 
@@ -121,8 +128,7 @@ namespace Numerical_methods {
             return *this;
         }
 
-        matrix<value_t, Height, Width> &operator-=(const matrix <value_t, Height, Width> &another) {
-
+        matrix<value_t> &operator-=(const matrix <value_t> &another) {
             assert(this->height() == another.height());
             assert(this->width() == another.width());
 
@@ -134,8 +140,7 @@ namespace Numerical_methods {
             return *this;
         }
 
-        matrix<value_t, Height, Width> &operator*=(double value) {
-
+        matrix<value_t> &operator*=(double value) {
             for (int idx_x = 0; idx_x < Height; idx_x++) {
                 for (int idx_y = 0; idx_y < Width; idx_y++) {
                     this->at(idx_x, idx_y) *= value;
@@ -144,8 +149,7 @@ namespace Numerical_methods {
             return *this;
         }
 
-        matrix<value_t, Height, Width> &operator/=(double value) {
-
+        matrix<value_t> &operator/=(double value) {
             for (int idx_x = 0; idx_x < Height; idx_x++) {
                 for (int idx_y = 0; idx_y < Width; idx_y++) {
                     this->at(idx_x, idx_y) /= value;
@@ -156,77 +160,82 @@ namespace Numerical_methods {
 
     };
 
-    template<solution_element_t value_t, std::size_t Height, std::size_t Width = Height>
-    matrix<value_t, Height, Width> operator+(
-            const matrix <value_t, Height, Width> &lhs,
-            const matrix <value_t, Height, Width> &rhs) {
+    template<solution_element_t value_t>
+    matrix<value_t> operator+(
+            const matrix <value_t> &lhs,
+            const matrix <value_t> &rhs) {
 
-        matrix<value_t, Height, Width> result;
-        for (int idx_x = 0; idx_x < Height; idx_x++) {
-            for (int idx_y = 0; idx_y < Width; idx_y++) {
+        assert(lhs.height() == rhs.height());
+        assert(lhs.width() == rhs.width());
+
+        matrix<value_t> result(lhs.height(), lhs.width());
+        for (int idx_x = 0; idx_x < result.height(); ++idx_x) {
+            for (int idx_y = 0; idx_y < result.width(); ++idx_y) {
                 result[idx_x][idx_y] = lhs[idx_x][idx_y] + rhs[idx_x][idx_y];
             }
         }
         return result;
     }
 
-    template<solution_element_t value_t, std::size_t Height, std::size_t Width = Height>
-    matrix<value_t, Height, Width> operator-(
-            const matrix <value_t, Height, Width> &lhs,
-            const matrix <value_t, Height, Width> &rhs) {
+    template<solution_element_t value_t>
+    matrix<value_t> operator-(
+            const matrix <value_t> &lhs,
+            const matrix <value_t> &rhs) {
 
-        matrix<value_t, Height, Width> result;
-        for (int idx_x = 0; idx_x < Height; idx_x++) {
-            for (int idx_y = 0; idx_y < Width; idx_y++) {
+        assert(lhs.height() == rhs.height());
+        assert(lhs.width() == rhs.width());
+        matrix<value_t> result(lhs.height(), lhs.width());
+        for (int idx_x = 0; idx_x < result.height(); ++idx_x) {
+            for (int idx_y = 0; idx_y < result.width(); ++idx_y) {
                 result[idx_x][idx_y] = lhs[idx_x][idx_y] - rhs[idx_x][idx_y];
             }
         }
         return result;
     }
 
-    template<solution_element_t value_t, std::size_t Height, std::size_t Width = Height>
-    matrix<value_t, Height, Width> operator*(
-            matrix<value_t, Height, Width> &lhs,
+    template<solution_element_t value_t>
+    matrix<value_t> operator*(
+            matrix<value_t> &lhs,
             double rhs) {
 
-        matrix<value_t, Height, Width> result;
-        for (int idx_x = 0; idx_x < Height; idx_x++) {
-            for (int idx_y = 0; idx_y < Width; idx_y++) {
+        matrix<value_t> result(lhs.height(), lhs.width());
+        for (int idx_x = 0; idx_x < result.height(); ++idx_x) {
+            for (int idx_y = 0; idx_y < result.width(); ++idx_y) {
                 result[idx_x][idx_y] = lhs[idx_x][idx_y] * rhs;
             }
         }
         return result;
     }
 
-    template<solution_element_t value_t, std::size_t Height, std::size_t Width = Height>
-    matrix<value_t, Height, Width> operator*(
+    template<solution_element_t value_t>
+    matrix<value_t> operator*(
             double lhs,
-            const matrix <value_t, Height, Width> &rhs) {
+            const matrix <value_t> &rhs) {
 
-        matrix<value_t, Height, Width> result;
-        for (int idx_x = 0; idx_x < Height; ++idx_x) {
-            for (int idx_y = 0; idx_y < Width; ++idx_y) {
+        matrix<value_t> result(rhs.height(), rhs.width());
+        for (int idx_x = 0; idx_x < result.height(); ++idx_x) {
+            for (int idx_y = 0; idx_y < result.width(); ++idx_y) {
                 result[idx_x][idx_y] = lhs * rhs[idx_x][idx_y];
             }
         }
         return result;
     }
 
-    template<solution_element_t value_t, std::size_t lhs_Height, std::size_t lhs_Width, std::size_t rhs_Height, std::size_t rhs_Width>
-    matrix<value_t, lhs_Height, rhs_Width> operator*(
-            const matrix<value_t, lhs_Height, lhs_Width>& lhs,
-            const matrix<value_t, rhs_Height, rhs_Width>& rhs)
+    template<solution_element_t value_t>
+    matrix<value_t> operator*(
+            const matrix<value_t>& lhs,
+            const matrix<value_t>& rhs)
     {
-        assert( lhs_Width == rhs_Height );
+        assert( lhs.width() == rhs.height() );
 
-        matrix<value_t,lhs_Height, rhs_Width> buf{};
+        matrix<value_t> buf( lhs.width(), rhs.height());
 
-        for (int i = 0; i < lhs_Height; ++i)
+        for (int i = 0; i < lhs.height(); ++i)
         {
-            for (int j = 0; j < rhs_Width; ++j)
+            for (int j = 0; j < rhs.width(); ++j)
             {
                 value_t temp = lhs[i][0] * rhs[0][j];
-                for (int k = 1; k < lhs_Width; ++k)
+                for (int k = 1; k < lhs.width(); ++k)
                 {
                     temp += lhs[i][k] * rhs[k][j];
                 }
@@ -236,115 +245,29 @@ namespace Numerical_methods {
         return buf;
     }
 
-    template<solution_element_t value_t, std::size_t Height, std::size_t Width = Height>
-    matrix<value_t, Height, Width> operator/(
-            const matrix <value_t, Height, Width> &lhs,
+    template<solution_element_t value_t>
+    matrix<value_t> operator/(
+            const matrix <value_t> &lhs,
             double rhs) {
 
-        matrix<value_t, Height, Width> result;
-        for (int idx_x = 0; idx_x < Height; idx_x++) {
-            for (int idx_y = 0; idx_y < Width; idx_y++) {
+        matrix<value_t> result(lhs.height(), lhs.width());
+        for (int idx_x = 0; idx_x < result.height(); ++idx_x) {
+            for (int idx_y = 0; idx_y < result.width(); ++idx_y) {
                 result[idx_x][idx_y] = lhs[idx_x][idx_y] / rhs;
             }
         }
         return result;
     }
 
-    template<std::size_t Height, std::size_t Width = Height>
-    std::ostream &operator<<(std::ostream &stream, const matrix<double, Height, Width> &output_matrix) {
-        const int length = 10;
-        for (int i = 0; i < Height; i++) {
-            for (int j = 0; j < Width; j++) {
-                stream.width(length);
-                stream << output_matrix[i][j] << "\t";
-            }
-            stream << std::endl;
-        }
-        return stream;
-    }
+    std::ostream &operator<<(std::ostream &stream, const matrix<double> &output_matrix);
 
-    template<std::size_t Height>
-    matrix<double, Height, Height> inverse_Gauss(const matrix<double, Height, Height> &matrix_) {
+    matrix<double> inverse_Gauss(const matrix<double> &matrix_);
 
-        matrix<double, Height> identity_matrix{double()};
-        for (int i = 0; i < Height; i++)
-            for (int j = 0; j < Height; j++)
-                identity_matrix[i][j] = i == j ? double{1.0} : double{0.0};
+    matrix<double> inverse(const matrix<double> &matrix_);
 
-        matrix<double, Height> temporary_matrix = matrix_;
-        double multiplier = 0.0;
-
-        for (int k = 0; k < Height; k++) {
-            for (int i = k; i < Height; i++) {
-                multiplier = temporary_matrix[i][k] == 0.0 ? 1.0 : temporary_matrix[i][k];
-                for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][j] /= multiplier;
-                    identity_matrix[i][j] /= multiplier;
-                }
-            }
-
-            for (int i = k + 1; i < Height; i++) {
-                for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][j] -= temporary_matrix[k][j];
-                    identity_matrix[i][j] -= identity_matrix[k][j];
-                }
-            }
-        }
-
-        for (int i = 0; i < Height; i++)
-            assert(temporary_matrix[i][i] != 0);
-
-        for (int k = Height - 1; k >= 0; k--) {
-            for (int i = k - 1; i >= 0; i--) {
-                multiplier = temporary_matrix[i][k];
-                for (int j = Height - 1; j >= 0; j--) {
-                    temporary_matrix[i][j] -= temporary_matrix[k][j] * multiplier;
-                    identity_matrix[i][j] -= identity_matrix[k][j] * multiplier;
-                }
-            }
-        }
-
-        return identity_matrix;
-    }
-
-    template<std::size_t Height>
     vector<double> Gauss_method(
-            const matrix<double, Height, Height> &matrix_,
-            const vector<double> &free_vector) {
-
-        vector<double> temporary_free_vector = free_vector;
-        matrix<double, Height> temporary_matrix = matrix_;
-        double multiplier{0.0};
-
-        for (int k = 0; k < Height; k++) {
-            for (int i = k; i < Height; i++) {
-                multiplier = temporary_matrix[i][k] == 0.0 ? 1.0 : temporary_matrix[i][k];
-                for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][k] /= multiplier;
-                }
-                temporary_free_vector[i] /= multiplier;
-            }
-
-            for (int i = k + 1; i < Height; i++) {
-                for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][j] -= temporary_matrix[k][j];
-                }
-                temporary_free_vector[i] -= temporary_free_vector[k];
-            }
-        }
-
-        vector<double> x(temporary_free_vector.size(), 0.0);
-        for (int k = Height - 1; k >= 0; k--) {
-            double sum = 0.0;
-            for (int i = k + 1; i < Height; i++) {
-                sum += x[i] * temporary_matrix[k][i];
-            }
-            x[k] = (temporary_free_vector[k] - sum) / temporary_matrix[k][k];
-
-        }
-        return x;
-    }
-
+            const matrix<double> &matrix_,
+            const vector<double> &free_vector);
 }
 
 #endif //MAIN_CPP_MATRIX_HPP

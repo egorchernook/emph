@@ -34,11 +34,12 @@ namespace Numerical_methods {
         lhs /= 2.0;
     };
 
-    template<solution_t_concept solution_t>
+    template<solution_element_t solution_t>
     struct return_t {
         solution_t solution;
         double error;
     };
+
 }
 
 #endif //MAIN_CPP_SOLUTION_T_CONCEPT_HPP
