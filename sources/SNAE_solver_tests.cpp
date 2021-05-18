@@ -37,9 +37,11 @@ bool Numerical_methods::SNAE_solver_tests::test_Seidels_method() {
 
 bool Numerical_methods::SNAE_solver_tests::test_Newtons_method() {
     vector<double> initial_state = {0.0, 0.0};
-    Newtons_method<vector<double>> solver(SNAE_solver_tests::test_equation,
-                                          { SNAE_solver_tests::test_equation_derivative_x,
-                                                             SNAE_solver_tests::test_equation_derivative_y});
+    Newtons_method<vector<double>> solver([](const vector<double>& old) -> vector<double>{
+                                                                    return old - test_equation(old);
+                                                                },
+                                          { SNAE_solver_tests::test_equation_derivative_1,
+                                                             SNAE_solver_tests::test_equation_derivative_2});
     auto solving_result = solver.solve( initial_state);
 
     bool result = (solving_result.solution[0] - solving_result.error) * 10'000 < 0.5 * 10'000 &&

@@ -32,8 +32,8 @@ namespace Numerical_methods{
                 const auto multiplier = std::abs( temporary_matrix[i][k]) < std::numeric_limits<double>::epsilon() * 10'000
                                         ? 1.0 : temporary_matrix[i][k];
                 for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][j] *= inverse(multiplier);
-                    identity_matrix[i][j] *= inverse(multiplier);
+                    temporary_matrix[i][j] /= multiplier;
+                    identity_matrix[i][j] /= multiplier;
                 }
             }
 
@@ -71,19 +71,19 @@ namespace Numerical_methods{
 
         assert( matrix_.height() == matrix_.width());
         assert( matrix_.height() == free_vector.size());
-        const int Height = matrix_.height();
+        const int Height = static_cast<int>(matrix_.height());
 
         vector<double> temporary_free_vector = free_vector;
-        matrix<double> temporary_matrix = matrix_;
+        auto temporary_matrix = matrix_;
 
         for (int k = 0; k < Height; k++) {
             for (int i = k; i < Height; i++) {
                 const auto multiplier = std::abs( temporary_matrix[i][k]) < std::numeric_limits<double>::epsilon() * 10'000
                                         ? 1.0 : temporary_matrix[i][k];
                 for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][k] *= inverse(multiplier);
+                    temporary_matrix[i][k] /= multiplier;
                 }
-                temporary_free_vector[i] *= inverse(multiplier);
+                temporary_free_vector[i] /= multiplier;
             }
 
             for (int i = k + 1; i < Height; i++) {
@@ -100,7 +100,7 @@ namespace Numerical_methods{
             for (int i = k + 1; i < Height; i++) {
                 sum += x[i] * temporary_matrix[k][i];
             }
-            x[k] = (temporary_free_vector[k] - sum) * inverse(temporary_matrix[k][k]);
+            x[k] = (temporary_free_vector[k] - sum) / temporary_matrix[k][k];
 
         }
         return x;

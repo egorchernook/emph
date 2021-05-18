@@ -8,6 +8,7 @@
 #include "solution_t_concept.hpp"
 #include "min_and_max_functions.hpp"
 #include "matrix.hpp"
+#include "expand_function.hpp"
 
 namespace Numerical_methods {
 
@@ -21,9 +22,9 @@ namespace Numerical_methods {
     protected:
         function_t function;
     public:
-        double methods_error = 0.000'001;
+        double methods_error = 0.000'1;
 
-        SNAE_solver(  const function_t& function_, const double &error = 0.000'001)
+        SNAE_solver(  const function_t& function_, const double &error = 0.000'1)
                     : methods_error(error),
                       function(function_){}
 
@@ -92,7 +93,7 @@ namespace Numerical_methods {
     private:
         std::vector<function_t> function_derivatives;
     public:
-        Newtons_method( const function_t& function_, const std::vector<function_t>& function_derivatives_, const double &error = 0.000'001)
+        Newtons_method( const function_t& function_, const std::vector<function_t>& function_derivatives_, const double &error = 0.000'1)
             : base_t(function_, error),
             function_derivatives(function_derivatives_){}
     private:
@@ -120,11 +121,12 @@ namespace Numerical_methods {
                 }
                 const solution_t free_part = base_t::function( old_solution );
                 error = Gauss_method(
-                            derivative,
-                            free_part);
+                            expand(derivative),
+                            expand(free_part));
 
                 new_solution = old_solution + error;
             } while ( get_local_error() > this->methods_error );
+
             return { new_solution, max(error) };
         }
     };

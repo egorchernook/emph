@@ -6,14 +6,14 @@
 
 namespace Numerical_methods {
 
-    template<solution_element_t value_t>
-    class matrix {
-    private:
+    template<typename value_t>
+    class base_matrix{
+    protected:
         value_t ** data = nullptr;
         std::size_t Height = 0;
         std::size_t Width = 0;
     public:
-        matrix(value_t value, std::size_t height, std::size_t width = 0) : Height(height), Width(width){
+        base_matrix(value_t value, std::size_t height, std::size_t width = 0) : Height(height), Width(width){
 
             if( width == 0){
                 Width = height;
@@ -28,7 +28,7 @@ namespace Numerical_methods {
             }
         }
 
-        matrix( std::size_t height, std::size_t width = 0) : Height(height), Width(width) {
+        base_matrix( std::size_t height, std::size_t width = 0) : Height(height), Width(width) {
             if( width == 0){
                 Width = height;
             }
@@ -38,7 +38,7 @@ namespace Numerical_methods {
             }
         }
 
-        ~matrix() noexcept {
+        ~base_matrix() noexcept {
             if ( data != nullptr ) {
                 for (int i = 0; i < Height; ++i) {
                     if (data[i] != nullptr) {
@@ -50,11 +50,11 @@ namespace Numerical_methods {
             }
         }
 
-        matrix(
+        base_matrix(
                 const std::initializer_list<
                         std::initializer_list<
                                 value_t>> &list)
-                                : Height(list.size()), Width(list.begin()->size())
+                : Height(list.size()), Width(list.begin()->size())
         {
             assert( Height == list.size());
             for (auto &x : list) {
@@ -68,7 +68,7 @@ namespace Numerical_methods {
             }
         }
 
-        matrix( const matrix& other) : Height(other.height()), Width(other.width()) {
+        base_matrix( const base_matrix& other) : Height(other.height()), Width(other.width()) {
             data = new value_t *[Height];
             for ( int i = 0; i < Height; i++){
                 data[i] = new value_t[Width];
@@ -101,7 +101,7 @@ namespace Numerical_methods {
             return data[idx][idy];
         }
 
-        matrix& operator=(const matrix &other) {
+        base_matrix& operator=(const base_matrix &other) {
             if (this == &other)
                 return *this;
             delete [] data;
@@ -115,13 +115,19 @@ namespace Numerical_methods {
             }
             return *this;
         }
+    };
 
+    template<solution_element_t value_t>
+    class matrix : public base_matrix<value_t>{
+        using base_t = base_matrix<value_t>;
+    public:
+        using base_t::base_t;
         matrix<value_t>& operator+=(const matrix <value_t> &another) {
             assert(this->height() == another.height());
             assert(this->width() == another.width());
 
-            for (int idx_x = 0; idx_x < Height; idx_x++) {
-                for (int idx_y = 0; idx_y < Width; idx_y++) {
+            for (int idx_x = 0; idx_x < base_t::Height; idx_x++) {
+                for (int idx_y = 0; idx_y < base_t::Width; idx_y++) {
                     this->at(idx_x, idx_y) += another[idx_x][idx_y];
                 }
             }
@@ -132,8 +138,8 @@ namespace Numerical_methods {
             assert(this->height() == another.height());
             assert(this->width() == another.width());
 
-            for (int idx_x = 0; idx_x < Height; idx_x++) {
-                for (int idx_y = 0; idx_y < Width; idx_y++) {
+            for (int idx_x = 0; idx_x < base_t::Height; idx_x++) {
+                for (int idx_y = 0; idx_y < base_t::Width; idx_y++) {
                     this->at(idx_x, idx_y) -= another[idx_x][idx_y];
                 }
             }
@@ -141,8 +147,8 @@ namespace Numerical_methods {
         }
 
         matrix<value_t> &operator*=(double value) {
-            for (int idx_x = 0; idx_x < Height; idx_x++) {
-                for (int idx_y = 0; idx_y < Width; idx_y++) {
+            for (int idx_x = 0; idx_x < base_t::Height; idx_x++) {
+                for (int idx_y = 0; idx_y < base_t::Width; idx_y++) {
                     this->at(idx_x, idx_y) *= value;
                 }
             }
@@ -150,8 +156,8 @@ namespace Numerical_methods {
         }
 
         matrix<value_t> &operator/=(double value) {
-            for (int idx_x = 0; idx_x < Height; idx_x++) {
-                for (int idx_y = 0; idx_y < Width; idx_y++) {
+            for (int idx_x = 0; idx_x < base_t::Height; idx_x++) {
+                for (int idx_y = 0; idx_y < base_t::Width; idx_y++) {
                     this->at(idx_x, idx_y) /= value;
                 }
             }

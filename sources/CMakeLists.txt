@@ -15,4 +15,4 @@ add_executable(folder main.cpp solution_t_concept.hpp
 		multisteps_methods_tests.cpp multisteps_methods_tests.hpp
 		ring_buffer_tests.cpp ring_buffer_tests.hpp
 		ODE_solver.hpp
-		boundary_value_problem.hpp heat_equation_solver.hpp matrix.cpp)
+		boundary_value_problem.hpp heat_equation_solver.hpp matrix.cpp expand_function.cpp expand_function.hpp)

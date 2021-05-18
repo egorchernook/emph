@@ -1,10 +1,9 @@
 #include "vector.hpp"
 
-template<>
-Numerical_methods::vector<double> Numerical_methods::inverse<double>( const Numerical_methods::vector<double> &initial){
+Numerical_methods::vector<double> Numerical_methods::inverse(const Numerical_methods::vector<double> &initial){
     Numerical_methods::vector<double> result = initial;
     for( auto &x : result){
-        x = inverse(x);
+        x = 1.0 / x;
     }
     return result;
 }

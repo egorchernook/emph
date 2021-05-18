@@ -3,6 +3,13 @@
 
 #include <cstdlib>
 #include <vector>
+
+//#include <concepts>
+namespace Numerical_methods {
+    template<typename T>
+    concept integral = std::is_integral_v<T>;
+}
+
 #include "solution_t_concept.hpp"
 
 namespace Numerical_methods {
@@ -23,7 +30,7 @@ namespace Numerical_methods {
         using std::vector<T>::front;
         using std::vector<T>::back;
 
-        template<std::integral value_t>
+        template<integral value_t>
         explicit vector( std::size_t count, value_t value = 0.0) : std::vector<T>(count) {
             for( auto& x : *this){
                 const T val{value};
@@ -153,17 +160,7 @@ namespace Numerical_methods {
         return result;
     }
 
-    template< solution_element_t T>
-    vector<T> inverse( const vector<T> &initial){
-        vector<T> result = initial;
-        for( auto &x : result){
-            x = inverse(x);
-        }
-        return result;
-    }
-
-    template<>
-    vector<double> inverse<double>( const vector<double> &initial);
+    vector<double> inverse( const vector<double> &initial);
 
     double inverse( double initial);
 }

@@ -13,13 +13,13 @@ namespace Numerical_methods {
             assert( input_data.size() == 2);
             return { 1 - input_data[1], 2.0/5 + input_data[0] / 5 };
         }
-        static vector<double> test_equation_derivative_x(const vector<double> &input_data) noexcept {
-            assert( input_data.size() == 2);
-            return { 1.0, -1.0};
-        }
-        static vector<double> test_equation_derivative_y(const vector<double> &input_data) noexcept {
+        static vector<double> test_equation_derivative_1(const vector<double> &input_data) noexcept {
             assert( input_data.size() == 2);
             return { 1.0, 1.0};
+        }
+        static vector<double> test_equation_derivative_2(const vector<double> &input_data) noexcept {
+            assert( input_data.size() == 2);
+            return { -1.0/5.0, 1.0};
         }
     public:
         SNAE_solver_tests();
