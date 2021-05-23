@@ -1,4 +1,5 @@
 #include "matrix.hpp"
+#include "min_and_max_functions.hpp"
 
 namespace Numerical_methods{
 
@@ -14,7 +15,7 @@ namespace Numerical_methods{
         return stream;
     }
 
-    matrix<double> inverse_Gauss(const matrix<double> &matrix_) {
+    matrix<double> inverse_Gauss( matrix<double> matrix_) {
 
         assert( matrix_.height() == matrix_.width()) ;
         const int Height = matrix_.height();
@@ -25,34 +26,32 @@ namespace Numerical_methods{
             for (int j = 0; j < Height; j++)
                 identity_matrix[i][j] = i == j ? 1.0 : 0.0;
 
-        matrix<double> temporary_matrix = matrix_;
-
         for (int k = 0; k < Height; k++) {
             for (int i = k; i < Height; i++) {
-                const auto multiplier = std::abs( temporary_matrix[i][k]) < std::numeric_limits<double>::epsilon() * 10'000
-                                        ? 1.0 : temporary_matrix[i][k];
+                const auto multiplier = std::abs( matrix_[i][k]) < std::numeric_limits<double>::epsilon() * 10'000
+                                        ? 1.0 : matrix_[i][k];
                 for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][j] /= multiplier;
+                    matrix_[i][j] /= multiplier;
                     identity_matrix[i][j] /= multiplier;
                 }
             }
 
             for (int i = k + 1; i < Height; i++) {
                 for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][j] -= temporary_matrix[k][j];
+                    matrix_[i][j] -= matrix_[k][j];
                     identity_matrix[i][j] -= identity_matrix[k][j];
                 }
             }
         }
 
         for (int i = 0; i < Height; i++)
-            assert(temporary_matrix[i][i] != 0);
+            assert(matrix_[i][i] != 0);
 
         for (int k = Height - 1; k >= 0; k--) {
             for (int i = k - 1; i >= 0; i--) {
-                const auto multiplier = temporary_matrix[i][k];
+                const auto multiplier = matrix_[i][k];
                 for (int j = Height - 1; j >= 0; j--) {
-                    temporary_matrix[i][j] -= temporary_matrix[k][j] * multiplier;
+                    matrix_[i][j] -= matrix_[k][j] * multiplier;
                     identity_matrix[i][j] -= identity_matrix[k][j] * multiplier;
                 }
             }
@@ -66,43 +65,92 @@ namespace Numerical_methods{
     }
 
     vector<double> Gauss_method(
-            const matrix<double> &matrix_,
-            const vector<double> &free_vector) {
+            matrix<double> matrix_,
+            vector<double> free_vector) {
 
         assert( matrix_.height() == matrix_.width());
         assert( matrix_.height() == free_vector.size());
         const int Height = static_cast<int>(matrix_.height());
 
-        vector<double> temporary_free_vector = free_vector;
-        auto temporary_matrix = matrix_;
+        vector<int> result_indexes(free_vector.size());
+        for( int i = 0; i < free_vector.size(); ++i){
+            result_indexes[i] = i;
+        }
 
         for (int k = 0; k < Height; k++) {
-            for (int i = k; i < Height; i++) {
-                const auto multiplier = std::abs( temporary_matrix[i][k]) < std::numeric_limits<double>::epsilon() * 10'000
-                                        ? 1.0 : temporary_matrix[i][k];
-                for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][k] /= multiplier;
+
+            double max_element = matrix_[k][k];
+            int i_max{k};
+            int j_max{k};
+            for( int i = k; i < Height; ++i){
+                for( int j = k; j < Height; ++j){
+                    if( matrix_[i][j] > max_element) {
+                        max_element = matrix_[i][j];
+                        j_max = j;
+                        i_max = i;
+                    }
                 }
-                temporary_free_vector[i] /= multiplier;
+            }
+
+            if( i_max != k ) {
+                const auto temp_ptr = matrix_[i_max];
+                matrix_[i_max] = matrix_[k];
+                matrix_[k] = temp_ptr;
+                const auto temp_d = free_vector[i_max];
+                free_vector[i_max] = free_vector[k];
+                free_vector[k] = temp_d;
+
+                if( j_max != k ) {
+                    for( int i = 0; i < Height; ++i ) {
+                        const double temp = matrix_[j_max][i];
+                        matrix_[j_max][i] = matrix_[k][i];
+                        matrix_[k][i] = temp;
+                    }
+                    result_indexes[k] = j_max;
+                    result_indexes[j_max] = j_max;
+                }
+            }
+
+            for (int i = k; i < Height; i++) {
+                const auto multiplier =
+                        std::abs(
+                                matrix_[i][k]) <
+                                std::numeric_limits<double>::epsilon() * 10'000
+                                    ? 1.0 : matrix_[i][k];
+                for (int j = 0; j < Height; j++) {
+                    matrix_[i][k] /= multiplier;
+                }
+                free_vector[i] /= multiplier;
             }
 
             for (int i = k + 1; i < Height; i++) {
                 for (int j = 0; j < Height; j++) {
-                    temporary_matrix[i][j] -= temporary_matrix[k][j];
+                    matrix_[i][j] -= matrix_[k][j];
                 }
-                temporary_free_vector[i] -= temporary_free_vector[k];
+                free_vector[i] -= free_vector[k];
             }
         }
 
-        vector<double> x(temporary_free_vector.size(), 0.0);
+        vector<double> x(free_vector.size(), 0.0);
         for (int k = Height - 1; k >= 0; k--) {
             double sum{0.0};
             for (int i = k + 1; i < Height; i++) {
-                sum += x[i] * temporary_matrix[k][i];
+                const auto temp = (
+                                    std::abs(matrix_[k][i]) < std::numeric_limits<double>::epsilon() * 10'000 )
+                                            ? std::numeric_limits<double>::epsilon() * 10'000 : matrix_[k][i];
+                sum += x[i] * temp;
             }
-            x[k] = (temporary_free_vector[k] - sum) / temporary_matrix[k][k];
+            const auto temp = (
+                                      std::abs(matrix_[k][k]) < std::numeric_limits<double>::epsilon() * 10'000 )
+                              ? std::numeric_limits<double>::epsilon() * 10'000 : matrix_[k][k];
+            x[k] = (free_vector[k] - sum) / temp;
 
         }
-        return x;
+
+        vector<double> result = x;
+        for( int i = 0; i < x.size(); ++i){
+            result[ result_indexes[i] ] = x[i];
+        }
+        return result;
     }
 }

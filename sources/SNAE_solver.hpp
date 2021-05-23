@@ -110,16 +110,18 @@ namespace Numerical_methods {
                 return Numerical_methods::max(Numerical_methods::abs(new_solution - old_solution));
             };
 
+            matrix<value_t> derivative( solution_size);
+
             do {
                 old_solution = new_solution;
-                matrix<value_t> derivative( solution_size);
+
                 for( int i = 0; i < solution_size; ++i){
                     const auto row = function_derivatives[i](old_solution);
                     for( int j = 0; j < solution_size; ++j) {
                         derivative[i][j] = row[j];
                     }
                 }
-                const solution_t free_part = base_t::function( old_solution );
+                const solution_t free_part = -1.0 * base_t::function( old_solution );
                 error = Gauss_method(
                             expand(derivative),
                             expand(free_part));

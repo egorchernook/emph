@@ -23,6 +23,7 @@ namespace Numerical_methods {
         using std::vector<T>::push_back;
         using std::vector<T>::size;
         using std::vector<T>::operator=;
+        using std::vector<T>::reserve;
         using std::vector<T>::begin;
         using std::vector<T>::end;
         using std::vector<T>::rbegin;

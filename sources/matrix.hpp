@@ -1,6 +1,8 @@
 #ifndef MAIN_CPP_MATRIX_HPP
 #define MAIN_CPP_MATRIX_HPP
 
+#include <vector>
+
 #include "vector.hpp"
 #include "solution_t_concept.hpp"
 
@@ -39,7 +41,7 @@ namespace Numerical_methods {
         }
 
         ~base_matrix() noexcept {
-            if ( data != nullptr ) {
+            if (data != nullptr ) {
                 for (int i = 0; i < Height; ++i) {
                     if (data[i] != nullptr) {
                         delete[] data[i];
@@ -56,7 +58,7 @@ namespace Numerical_methods {
                                 value_t>> &list)
                 : Height(list.size()), Width(list.begin()->size())
         {
-            assert( Height == list.size());
+            assert(Height == list.size());
             for (auto &x : list) {
                 assert(Width == x.size());
             }
@@ -70,7 +72,7 @@ namespace Numerical_methods {
 
         base_matrix( const base_matrix& other) : Height(other.height()), Width(other.width()) {
             data = new value_t *[Height];
-            for ( int i = 0; i < Height; i++){
+            for (int i = 0; i < Height; i++){
                 data[i] = new value_t[Width];
                 for (int j = 0; j < Width; j++)
                     data[i][j] = other.data[i][j];
@@ -85,13 +87,13 @@ namespace Numerical_methods {
             return Width;
         }
 
-        [[nodiscard]] value_t * operator[](std::size_t idx) const {
-            assert( idx < Height );
+        [[nodiscard]] value_t *& operator[](std::size_t idx) const {
+            assert(idx < Height );
             return data[idx];
         }
 
-        [[nodiscard]] value_t * at(std::size_t idx) const {
-            assert( idx < Height );
+        [[nodiscard]] value_t *& at(std::size_t idx) const {
+            assert(idx < Height );
             return data[idx];
         }
 
@@ -108,7 +110,7 @@ namespace Numerical_methods {
             Height = other.height();
             Width = other.width();
             data = new value_t *[Height];
-            for ( int i = 0; i < Height; i++){
+            for (int i = 0; i < Height; i++){
                 data[i] = new value_t[Width];
                 for (int j = 0; j < Width; j++)
                     data[i][j] = other.data[i][j];
@@ -267,13 +269,13 @@ namespace Numerical_methods {
 
     std::ostream &operator<<(std::ostream &stream, const matrix<double> &output_matrix);
 
-    matrix<double> inverse_Gauss(const matrix<double> &matrix_);
+    matrix<double> inverse_Gauss(matrix<double> matrix_);
 
     matrix<double> inverse(const matrix<double> &matrix_);
 
     vector<double> Gauss_method(
-            const matrix<double> &matrix_,
-            const vector<double> &free_vector);
+            matrix<double> matrix_,
+            vector<double> free_vector);
 }
 
 #endif //MAIN_CPP_MATRIX_HPP
