@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "vector.hpp"
 
 Numerical_methods::vector<double> Numerical_methods::inverse(const Numerical_methods::vector<double> &initial){

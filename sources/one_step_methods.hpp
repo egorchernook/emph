@@ -70,7 +70,7 @@ namespace Numerical_methods{
         void set_Butcher_table( Butcher_table<number_of_stages>& table ) {
             for( int i = 0; i < table.a_matrix.height(); ++i) {
                 for( int j = i; j < table.a_matrix.width(); ++j) {
-                    if( std::is_base_of_v<Implicit<solution_t>,decltype(*this)>)
+                    if( std::is_base_of<Implicit<solution_t>,decltype(*this)>::value )
                         assert( table.a_matrix[i][j] == 0 );
                 }
             }

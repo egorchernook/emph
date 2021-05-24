@@ -11,12 +11,17 @@ namespace Numerical_methods {
     double abs(double arg);
     std::size_t size( double);
 
-    template<typename T>
-    concept sequence_container = requires( T arg){
-        arg[0];
-        arg.at(0);
-        arg.size();
-    };
+    #if defined __GNUC__ && __GNUC__ < 7
+        #define sequence_container typename
+    #else
+        template<typename T>
+        concept sequence_container = requires( T arg){
+            arg[0];
+            arg.at(0);
+            arg.size();
+        };
+    #endif
+
     template<sequence_container Class>
     double max(const Class &arg) {
         double result = max(arg[0]);

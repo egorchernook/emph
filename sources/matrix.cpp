@@ -1,3 +1,6 @@
+#include <cmath>
+#include <limits>
+
 #include "matrix.hpp"
 #include "min_and_max_functions.hpp"
 
@@ -76,16 +79,15 @@ namespace Numerical_methods{
         for( int i = 0; i < free_vector.size(); ++i){
             result_indexes[i] = i;
         }
+        for (int k = 0; k < Height; ++k) {
 
-        for (int k = 0; k < Height; k++) {
-
-            double max_element = matrix_[k][k];
+            double max_element = std::abs(matrix_[k][k]);
             int i_max{k};
             int j_max{k};
             for( int i = k; i < Height; ++i){
                 for( int j = k; j < Height; ++j){
-                    if( matrix_[i][j] > max_element) {
-                        max_element = matrix_[i][j];
+                    if( std::abs(matrix_[i][j]) > max_element) {
+                        max_element = std::abs(matrix_[i][j]);
                         j_max = j;
                         i_max = i;
                     }
@@ -112,11 +114,8 @@ namespace Numerical_methods{
             }
 
             for (int i = k; i < Height; i++) {
-                const auto multiplier =
-                        std::abs(
-                                matrix_[i][k]) <
-                                std::numeric_limits<double>::epsilon() * 10'000
-                                    ? 1.0 : matrix_[i][k];
+                const auto multiplier = std::abs( matrix_[i][k]) < std::numeric_limits<double>::epsilon() * 10'000
+                                        ? 1.0 : matrix_[i][k];
                 for (int j = 0; j < Height; j++) {
                     matrix_[i][k] /= multiplier;
                 }
@@ -135,22 +134,17 @@ namespace Numerical_methods{
         for (int k = Height - 1; k >= 0; k--) {
             double sum{0.0};
             for (int i = k + 1; i < Height; i++) {
-                const auto temp = (
-                                    std::abs(matrix_[k][i]) < std::numeric_limits<double>::epsilon() * 10'000 )
-                                            ? std::numeric_limits<double>::epsilon() * 10'000 : matrix_[k][i];
-                sum += x[i] * temp;
+                sum += x[i] * matrix_[k][i];
             }
-            const auto temp = (
-                                      std::abs(matrix_[k][k]) < std::numeric_limits<double>::epsilon() * 10'000 )
-                              ? std::numeric_limits<double>::epsilon() * 10'000 : matrix_[k][k];
-            x[k] = (free_vector[k] - sum) / temp;
-
+            x[k] = (free_vector[k] - sum) / matrix_[k][k];
         }
 
-        vector<double> result = x;
-        for( int i = 0; i < x.size(); ++i){
-            result[ result_indexes[i] ] = x[i];
+        auto result = x;
+
+        for( int i = 0; i < x.size(); ++i ) {
+            result[ i ] = x[ result_indexes[i]  ];
         }
+
         return result;
     }
 }

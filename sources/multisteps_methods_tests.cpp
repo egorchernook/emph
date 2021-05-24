@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cmath>
+
 #include "multisteps_methods_tests.hpp"
 #include "one_step_methods.hpp"
 #include "ring_buffer.hpp"
@@ -41,7 +42,7 @@ bool Numerical_methods::multisteps_methods_tests::Adams_Moulton_method_test() {
 
     impl_rkm_method.set_Butcher_table(table);
     Adams_Moulton_method< vector<double>, precision_order> another_impl_msm_solver{};
-    ///работает только в таком порядке!!!
+
     another_impl_msm_solver.set_initial_conditions(initial_state1);
     another_impl_msm_solver.set_function(multisteps_methods_tests::harmonic_oscillator_function);
     another_impl_msm_solver.set_starting_method( impl_rkm_method );
@@ -50,7 +51,7 @@ bool Numerical_methods::multisteps_methods_tests::Adams_Moulton_method_test() {
 
     bool result = true;
     double time = 0.0;
-    const double step = 0.000'1;
+    const double step = 0.01;
     ring_buffer< vector<double>, precision_order - 1 > buffer;
     ring_buffer< vector<double>, precision_order - 1 > buffer1;
     for(int i = 0; i < 3; ++i){

@@ -123,8 +123,8 @@ namespace Numerical_methods {
                 }
                 const solution_t free_part = -1.0 * base_t::function( old_solution );
                 error = Gauss_method(
-                            expand(derivative),
-                            expand(free_part));
+                            derivative,
+                            free_part);
 
                 new_solution = old_solution + error;
             } while ( get_local_error() > this->methods_error );

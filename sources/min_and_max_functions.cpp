@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "min_and_max_functions.hpp"
 
 double Numerical_methods::max(double arg) {

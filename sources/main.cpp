@@ -370,7 +370,8 @@ void second_task() {
     using namespace Numerical_methods;
 
     constexpr int precision_order = 4;
-    Butcher_table<precision_order - 1> table{
+    constexpr int table_size = 3;
+    Butcher_table<table_size> table{
             {{1.0 / 6, 0.0, -1.0 / 6},
                       {1.0 / 12, 5.0 / 12, 0.0},
                                {0.5, 1.0 / 3, 1.0 / 6}},
@@ -378,14 +379,14 @@ void second_task() {
             {0.0,     1.0 / 2, 1.0}
     };
     std::vector<double> coefficients = {3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24};
-    implicit_Runge_Kutta_method<vector<double>, precision_order - 1, precision_order> impl_rkm_method{};
+    implicit_Runge_Kutta_method<vector<double>, table_size, precision_order> impl_rkm_method{};
     impl_rkm_method.set_Butcher_table(table);
 
     Adams_Moulton_method<vector<double>, precision_order> impl_msm_solver{};
     impl_msm_solver.set_starting_method(impl_rkm_method);
     impl_msm_solver.set_coefficients(coefficients);
 
-    implicit_Runge_Kutta_method<vector<double>, precision_order - 1, precision_order> another_impl_rkm_method{};
+    implicit_Runge_Kutta_method<vector<double>, table_size, precision_order> another_impl_rkm_method{};
     another_impl_rkm_method.set_Butcher_table(table);
 
     Adams_Moulton_method<vector<double>, precision_order> another_impl_msm_solver{};
@@ -491,11 +492,12 @@ void second_task() {
 };
 
 int main() {
-    Numerical_methods::test();
+    //Numerical_methods::test();
     //harmonic();
     //first_task();
     //second_task_test1();
     //second_task_test2();
     //second_task();
+
     return 0;
 };

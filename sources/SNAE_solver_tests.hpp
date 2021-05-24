@@ -25,7 +25,7 @@ namespace Numerical_methods {
         SNAE_solver_tests();
         static bool test_fixed_point_iterations_method();
         static bool test_Seidels_method();
-        static bool test_Newtons_method();
+        //static bool test_Newtons_method();
     };
 }
 

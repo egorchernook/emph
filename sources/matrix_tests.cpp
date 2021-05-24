@@ -1,4 +1,7 @@
 #include <iostream>
+#include <cmath>
+#include <limits>
+
 #include "matrix_tests.hpp"
 
 Numerical_methods::matrix_tests::matrix_tests() {

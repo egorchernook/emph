@@ -18,12 +18,12 @@ namespace Numerical_methods {
         bool full = false;
     public:
 
-        ring_buffer() : data( base_container_t() ) {}
+        ring_buffer() : data() {}
 
-        ring_buffer(const base_container_t &_container, std::size_t _start = 0, bool _full = false) :
-                data(_container),
-                start(_start),
-                full(_full) {
+        ring_buffer(const base_container_t &_container, std::size_t _start = 0, bool _full = false)
+                : data(_container),
+                  start(_start),
+                  full(_full) {
             assert(_container.size() == elements_amount);
         }
 
@@ -50,22 +50,31 @@ namespace Numerical_methods {
         }
 
         std::vector<solution_t> current_state(){
-            assert( is_filled() );
+            //assert( is_filled());
             std::vector<solution_t> result;
-            result.reserve(elements_amount);
-            for( int i = 0; i < elements_amount; ++i){
-                result.push_back( this->at(i) );
+            if(is_filled() ) {
+                result.reserve(elements_amount);
+                for (int i = 0; i < elements_amount; ++i) {
+                    result.push_back(this->at(i));
+                }
+            } else {
+                for( int i = 0; i < elements_amount; ++i){
+                    result.push_back(data[i]);
+                }
             }
             return result;
         }
 
         [[nodiscard]] solution_t first() noexcept {
-            return data[(start -1) % elements_amount];
+            return data[(start - 1) % elements_amount];
         }
 
         [[nodiscard]] solution_t last() noexcept {
-            assert( full );
-            return data[start];
+            if( full ) {
+                return data[start];
+            } else {
+                return data[0];
+            }
         }
 
         [[nodiscard]] bool is_filled() const noexcept {

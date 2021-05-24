@@ -1,5 +1,8 @@
 #include <iostream>
 #include <cassert>
+#include <cmath>
+#include <limits>
+
 #include "vector_tests.hpp"
 
 Numerical_methods::vector_tests::vector_tests() {

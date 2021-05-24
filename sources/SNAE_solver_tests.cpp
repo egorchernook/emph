@@ -34,7 +34,7 @@ bool Numerical_methods::SNAE_solver_tests::test_Seidels_method() {
                   (solving_result.solution[1] + solving_result.error) * 10'000 > 0.5 * 10'000;
     return result;
 }
-
+/*
 bool Numerical_methods::SNAE_solver_tests::test_Newtons_method() {
     vector<double> initial_state = {1.0, 0.0};
     Newtons_method<vector<double>> solver([](const vector<double>& old) -> vector<double>{
@@ -50,3 +50,4 @@ bool Numerical_methods::SNAE_solver_tests::test_Newtons_method() {
                   (solving_result.solution[1] + solving_result.error) * 10'000 > 0.5 * 10'000;
     return result;
 }
+*/

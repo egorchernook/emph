@@ -30,7 +30,7 @@ namespace Numerical_methods{
         ring_buffer<solution_t, buffer_size> buffer;
         function_t function;
         double time = 0.0;
-        solution_t initial_conditions;
+        solution_t initial_conditions = {0.0};
     public:
         auto get_buffer_state()  {
             return buffer.current_state();
@@ -44,7 +44,7 @@ namespace Numerical_methods{
         auto get_last_element()  {
             return buffer.first();
         }
-        ODE_solver() : buffer(ring_buffer<solution_t, buffer_size>()) {}
+        ODE_solver() : buffer() {}
 
         virtual void set_initial_conditions(const solution_t &initial_conditions_) {
             set_initial_conditions_impl( initial_conditions_);
@@ -99,8 +99,8 @@ namespace Numerical_methods{
                 double step,
                 double time ) const = 0;
 
-        return_t<solution_t> get_next_step_impl( double step_, double time_ ){
-            return_t<solution_t> result;
+        return_t<solution_t> get_next_step_impl( double step_, double time_ ) override {
+            return_t<solution_t> result{};
             const initial_state_t old_state = base_t::buffer.first();
             result = this->make_step( old_state, step_, time_ );
             const solution_t next_value = result.solution;
@@ -119,6 +119,12 @@ namespace Numerical_methods{
         using typename base_t::function_t;
         using ODE_solver<solution_t, number_of_steps - 1>::ODE_solver;
         using base_t::function;
+        /*
+        multisteps_solver( const multisteps_solver& other) : base_t(other){
+            auto temp = *other.starting_method;
+            starting_method = &temp;
+        }
+        */
         void set_starting_method( one_step_solver<solution_t>& method ){
             starting_method = &method;
         };
@@ -157,8 +163,8 @@ namespace Numerical_methods{
                 double step,
                 double time ) const = 0;
 
-        return_t<solution_t> get_next_step_impl( double step_, double time_ ){
-            return_t<solution_t> result;
+        return_t<solution_t> get_next_step_impl( double step_, double time_ ) override {
+            return_t<solution_t> result{};
             if ( !base_t::buffer.is_filled() ) {
                 const auto old_state = base_t::buffer.first();
                 result = starting_method->make_step( old_state, step_, time_ );
@@ -174,10 +180,10 @@ namespace Numerical_methods{
     };
     template< solution_t_concept solution_t,
             template <solution_t_concept> class SNAE_method = Seidels_method,
-                    std::enable_if_t<
-                        std::is_base_of_v<  SNAE_solver<solution_t>,
-                            SNAE_method<solution_t>
-                     >, bool> = true>
+                    typename std::enable_if<
+                        std::is_base_of<SNAE_solver<solution_t>,
+                            SNAE_method<solution_t> >::value,
+                            bool>::type = true>
     struct Implicit{
         static SNAE_method<solution_t> create_SNAE_solver( const typename SNAE_method<solution_t>::function_t& function) {
             return SNAE_method<solution_t>( function );

@@ -4,10 +4,21 @@
 #include <cstdlib>
 #include <vector>
 
-//#include <concepts>
 namespace Numerical_methods {
-    template<typename T>
-    concept integral = std::is_integral_v<T>;
+    #ifdef __has_include
+        #if __has_include(<concepts>)
+            #include <concepts>
+            template<typename T>
+            concept integral = std::integral<T>;
+        #else
+            #if defined __GNUC__ && __GNUC__ < 7
+                #define integral typename
+            #else
+                template<typename T>
+                concept integral = std::is_integral<T>::value;
+            #endif
+        #endif
+    #endif
 }
 
 #include "solution_t_concept.hpp"
@@ -32,9 +43,9 @@ namespace Numerical_methods {
         using std::vector<T>::back;
 
         template<integral value_t>
-        explicit vector( std::size_t count, value_t value = 0.0) : std::vector<T>(count) {
+        explicit vector( std::size_t count, value_t value = 0.0) : std::vector<T>(count, T(value) ) {
+            const T val{value};
             for( auto& x : *this){
-                const T val{value};
                 x = val;
             }
         }
@@ -91,7 +102,7 @@ namespace Numerical_methods {
 
         assert(lhs.size() == rhs.size());
 
-        vector<T> result;
+        vector<T> result{};
         for (std::size_t idx = 0; idx < lhs.size(); idx++) {
             result.push_back(lhs[idx] + rhs[idx]);
         }
@@ -105,7 +116,7 @@ namespace Numerical_methods {
 
         assert(lhs.size() == rhs.size());
 
-        vector<T> result;
+        vector<T> result{};
         for (std::size_t idx = 0; idx < lhs.size(); idx++) {
             result.push_back(lhs[idx] - rhs[idx]);
         }
@@ -117,7 +128,7 @@ namespace Numerical_methods {
             const vector<T> &lhs,
             double rhs) {
 
-        vector<T> result;
+        vector<T> result{};
         for (std::size_t idx = 0; idx < lhs.size(); idx++) {
             result.push_back(lhs[idx] * rhs);
         }
@@ -129,7 +140,7 @@ namespace Numerical_methods {
             double lhs,
             const vector<T> &rhs) {
 
-        vector<T> result;
+        vector<T> result{};
         for (std::size_t idx = 0; idx < rhs.size(); idx++) {
             result.push_back(lhs * rhs[idx]);
         }
@@ -141,7 +152,7 @@ namespace Numerical_methods {
             const vector<T> &lhs,
             double rhs) {
 
-        vector<T> result;
+        vector<T> result{};
         for (std::size_t idx = 0; idx < lhs.size(); idx++) {
             result.push_back(lhs[idx] / rhs);
         }
@@ -154,7 +165,7 @@ namespace Numerical_methods {
             const vector<T> &rhs) {
 
         assert( lhs.size() == rhs.size() );
-        vector<T> result;
+        vector<T> result{};
         for (std::size_t idx = 0; idx < lhs.size(); idx++) {
             result.push_back(lhs[idx] * rhs[idx]);
         }
