@@ -24,7 +24,7 @@ namespace Numerical_methods {
     public:
         double methods_error = 0.000'1;
 
-        SNAE_solver(  const function_t& function_, const double &error = 0.000'1)
+        SNAE_solver(  const function_t& function_, const double &error = 0.000'001)
                     : methods_error(error),
                       function(function_){}
 
@@ -66,6 +66,7 @@ namespace Numerical_methods {
     private:
         return_t<solution_t> solve_impl(
                 const solution_t &initial_state) override {
+
             solution_t old_solution = initial_state;
             solution_t new_solution = initial_state;
 

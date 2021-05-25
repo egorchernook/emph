@@ -23,7 +23,6 @@ namespace Numerical_methods {
             lhs /= 2.0;
             lhs[0];
             lhs.at(0);
-            lhs.size();
         };
         template<typename T>
         concept solution_element_t = requires(T lhs, T rhs) {
@@ -41,8 +40,8 @@ namespace Numerical_methods {
 
     template<solution_element_t solution_t>
     struct return_t {
-        solution_t solution;
-        double error;
+        solution_t solution{};
+        double error{0.0};
     };
 }
 

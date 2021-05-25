@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <type_traits>
 
+#include "matrix.hpp"
+
 namespace Numerical_methods {
 
     double max(double arg);
@@ -67,6 +69,53 @@ namespace Numerical_methods {
     template<sequence_container Class>
     std::size_t size( const Class &arg){
         return arg.size();
+    }
+
+    template<typename Tp>
+    double max( const matrix<Tp>& arg ) {
+        double result = arg[0][0];
+        for( int i = 0; i < arg.height(); ++i ) {
+            for( int j = 0; j < arg.width(); ++j ) {
+                if (result < max(arg[i][j]) ) {
+                    result = max(arg[i][j]);
+                }
+            }
+        }
+        return result;
+    }
+    template<typename Tp>
+    double min( const matrix<Tp>& arg ) {
+        double result = arg[0][0];
+        for( int i = 0; i < arg.height(); ++i ) {
+            for( int j = 0; j < arg.width(); ++j ) {
+                if (result > min(arg[i][j]) ) {
+                    result = min(arg[i][j]);
+                }
+            }
+        }
+        return result;
+    }
+    template<typename Tp>
+    double lowest( const matrix<Tp>& arg ) {
+        double result = lowest(arg[0][0]);
+        for( int i = 0; i < arg.height(); ++i ) {
+            for( int j = 0; j < arg.width(); ++j ) {
+                if( abs(result) > abs(lowest(arg[i][j]))){
+                    result = lowest(arg[i][j]);
+                }
+            }
+        }
+        return result;
+    }
+    template<typename Tp>
+    auto abs(const matrix<Tp>& arg) {
+        auto result = dynamic_cast<decltype(arg)>(arg);
+        for( int i = 0; i < arg.height(); ++i) {
+            for( int j = 0; j < arg.width(); ++j) {
+                result[i][j] = abs(arg[i][j]);
+            }
+        }
+        return result;
     }
 }
 

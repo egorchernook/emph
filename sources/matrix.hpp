@@ -15,6 +15,7 @@ namespace Numerical_methods {
         std::size_t Height = 0;
         std::size_t Width = 0;
     public:
+        base_matrix() : data(nullptr), Height(0), Width(0) {}
         base_matrix(value_t value, std::size_t height, std::size_t width = 0) : Height(height), Width(width){
 
             if( width == 0){
@@ -124,6 +125,19 @@ namespace Numerical_methods {
         using base_t = base_matrix<value_t>;
     public:
         using base_t::base_t;
+
+        explicit operator vector<vector<value_t>>() {
+            vector<vector<value_t>> result;
+            result.reserve( this->Height );
+            for( int i = 0; i < this->Height; ++i) {
+                result[i].reserve( this->Width );
+                for( int j = 0; j < this->Width; ++j) {
+                    result[i][j] = this->at(i,j);
+                }
+            }
+            return result;
+        }
+
         matrix<value_t>& operator+=(const matrix <value_t> &another) {
             assert(this->height() == another.height());
             assert(this->width() == another.width());

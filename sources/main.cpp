@@ -10,6 +10,7 @@
 #include "one_step_methods.hpp"
 #include "multisteps_methods.hpp"
 #include "boundary_value_problem.hpp"
+#include "heat_equation_2d_solver.hpp"
 
 #include "tests.hpp"
 
@@ -491,6 +492,87 @@ void second_task() {
     std::cout << "shots : " << counter << "\t" << "final angle : " << solver.get_current_angle() << std::endl;
 };
 
+void third_test(){
+    constexpr int steps_amount = 100;
+    constexpr double step = 0.01;
+
+    using namespace Numerical_methods;
+
+    constexpr int precision_order = 4;
+    constexpr int table_size = 3;
+    Butcher_table<table_size> table{
+            {{1.0 / 6, 0.0, -1.0 / 6},
+                      {1.0 / 12, 5.0 / 12, 0.0},
+                               {0.5, 1.0 / 3, 1.0 / 6}},
+            {1.0 / 6, 2.0 / 3, 1.0 / 6},
+            {0.0,     1.0 / 2, 1.0}
+    };
+    std::vector<double> coefficients = {3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24};
+    implicit_Runge_Kutta_method<matrix<double>, table_size, precision_order> impl_rkm_method{};
+    impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method<matrix<double>, precision_order> impl_msm_solver{};
+    impl_msm_solver.set_starting_method(impl_rkm_method);
+    impl_msm_solver.set_coefficients(coefficients);
+
+    const first_and_second_conditions<double> conditions{
+            {[](double, double) -> double {
+                return 0;
+            },
+                    [](double, double) -> double {
+                        return 0;
+                    }
+            },
+            {[](double, double) -> double {
+                return 0;
+            },
+                    [](double, double) -> double {
+                        return 0;
+                    }
+            },
+            {0.0, 0.0},
+            {1.0, 1.0}
+    };
+
+    heat_equation_2d_solver<precision_order> solver{
+            [](const vector<double> &r) -> double {
+                return std::exp(r[0]);
+            },
+            [](const vector<double>&) -> double {
+                return 0.25;
+            },
+            [](const vector<double>&) -> double {
+                return 1.0;
+            },
+            [](const vector<double> &, double) -> double {
+                return 0.0;
+            },
+            &conditions,
+            {0.1, 0.1},
+            impl_msm_solver,
+            0.0,
+            step
+    };
+
+
+    std::ofstream output("../../results/test/test3/test3.dat", std::ios_base::trunc);
+    for( int i = 0; i < steps_amount; ++i ) {
+        const auto result = solver.get_next_step();
+        const auto layer = result.solution;
+        for( int j = 0; j < layer.height(); ++j ) {
+            for( int k = 0; k < layer.width(); ++k ) {
+                output  << i * step << "\t"
+                        << j * solver.lattice_steps_sizes[0] << "\t"
+                        << k * solver.lattice_steps_sizes[1] << "\t"
+                        << layer[j][k] << std::endl;
+            }
+        }
+    }
+
+    output.flush();
+    output.close();
+}
+
 int main() {
     //Numerical_methods::test();
     //harmonic();
@@ -498,6 +580,6 @@ int main() {
     //second_task_test1();
     //second_task_test2();
     //second_task();
-
+    third_test();
     return 0;
 };

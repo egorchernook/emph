@@ -30,7 +30,7 @@ namespace Numerical_methods{
         ring_buffer<solution_t, buffer_size> buffer;
         function_t function;
         double time = 0.0;
-        solution_t initial_conditions = {0.0};
+        solution_t initial_conditions = solution_t(0.0);
     public:
         auto get_buffer_state()  {
             return buffer.current_state();
@@ -179,7 +179,7 @@ namespace Numerical_methods{
         }
     };
     template< solution_t_concept solution_t,
-            template <solution_t_concept> class SNAE_method = Seidels_method,
+            template <solution_t_concept> class SNAE_method = fixed_point_iterations_method,
                     typename std::enable_if<
                         std::is_base_of<SNAE_solver<solution_t>,
                             SNAE_method<solution_t> >::value,
