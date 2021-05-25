@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="project_MMOOMPH"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="C:/Desktop/Folder/git/poomph/project"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="C:/Desktop/Folder/git/poomph/project"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="folder">
+				<Option output="C:/Desktop/Folder/git/poomph/project/folder.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Desktop/Folder/git/poomph/project"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../include/c++/10.2.0"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../include/c++/10.2.0/x86_64-w64-mingw32"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../include/c++/10.2.0/backward"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/include"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/include-fixed"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 folder"/>
+					<CompileFile command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="folder/fast">
+				<Option output="C:/Desktop/Folder/git/poomph/project/folder.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="C:/Desktop/Folder/git/poomph/project"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../include/c++/10.2.0"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../include/c++/10.2.0/x86_64-w64-mingw32"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../include/c++/10.2.0/backward"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/include"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/include-fixed"/>
+					<Add directory="c:\users\egor\gcc\bin\../lib/gcc/x86_64-w64-mingw32/10.2.0/../../../../x86_64-w64-mingw32/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 folder/fast"/>
+					<CompileFile command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="C:/Desktop/Folder/git/poomph/project"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="C:/MinGW/bin/mingw32-make.exe -f &quot;C:/Desktop/Folder/git/poomph/project/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/ODE_solver.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/SNAE_solver.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/SNAE_solver_tests.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/SNAE_solver_tests.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/boundary_value_problem.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/expand_function.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/expand_function.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/heat_equation_2d_solver.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/main.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/matrix.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/matrix.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/matrix_tests.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/matrix_tests.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/min_and_max_functions.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/min_and_max_functions.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/multisteps_methods.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/multisteps_methods_tests.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/multisteps_methods_tests.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/one_step_methods.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/one_step_methods_tests.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/one_step_methods_tests.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/ring_buffer.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/ring_buffer_tests.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/ring_buffer_tests.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/solution_t_concept.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/tests.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/vector.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/vector.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/vector_tests.cpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/vector_tests.hpp">
+			<Option target="folder"/>
+		</Unit>
+		<Unit filename="C:/Desktop/Folder/git/poomph/sources/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

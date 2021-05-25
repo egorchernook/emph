@@ -1,0 +1,3 @@
+"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\folder.dir/objects.a
+C:\Users\egor\gcc\bin\ar.exe cr CMakeFiles\folder.dir/objects.a @CMakeFiles\folder.dir\objects1.rsp
+C:\Users\egor\gcc\bin\g++.exe -Wl,--whole-archive CMakeFiles\folder.dir/objects.a -Wl,--no-whole-archive -o folder.exe -Wl,--out-implib,libfolder.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\folder.dir\linklibs.rsp

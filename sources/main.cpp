@@ -493,7 +493,7 @@ void second_task() {
 };
 
 void third_test(){
-    constexpr int steps_amount = 100;
+    constexpr int steps_amount = 10'000;
     constexpr double step = 0.01;
 
     using namespace Numerical_methods;
@@ -548,7 +548,7 @@ void third_test(){
                 return 0.0;
             },
             &conditions,
-            {0.1, 0.1},
+            {0.05, 0.05},
             impl_msm_solver,
             0.0,
             step
@@ -557,6 +557,7 @@ void third_test(){
 
     std::ofstream output("../../results/test/test3/test3.dat", std::ios_base::trunc);
     for( int i = 0; i < steps_amount; ++i ) {
+        std::cout << "Time : " << i * step << std::endl;
         const auto result = solver.get_next_step();
         const auto layer = result.solution;
         for( int j = 0; j < layer.height(); ++j ) {
