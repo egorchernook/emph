@@ -14,6 +14,8 @@
 
 #include "tests.hpp"
 
+#define pi 3.14159265359
+
 void harmonic(){
     constexpr int steps_amount = 10'000;
     constexpr double period = 10.0 * 3.141'592'654;
@@ -493,8 +495,8 @@ void second_task() {
 };
 
 void third_test(){
-    constexpr int steps_amount = 10'000;
-    constexpr double step = 0.01;
+    constexpr int steps_amount = 11;
+    constexpr double step = 0.1;
 
     using namespace Numerical_methods;
 
@@ -515,31 +517,32 @@ void third_test(){
     impl_msm_solver.set_starting_method(impl_rkm_method);
     impl_msm_solver.set_coefficients(coefficients);
 
-    const first_and_second_conditions<double> conditions{
-            {[](double, double) -> double {
+    const Dirichlet_conditions<double,2> x_conditions(
+            [](const vector<double>&, double) -> double {
                 return 0;
             },
-                    [](double, double) -> double {
+            [](const vector<double>&, double) -> double {
                         return 0;
-                    }
             },
-            {[](double, double) -> double {
+            0.0,
+            1.0 );
+    const Neumann_conditions<double,2> y_conditions(
+            [](const vector<double>&, double) -> double {
                 return 0;
             },
-                    [](double, double) -> double {
-                        return 0;
-                    }
+            [](const vector<double>&, double) -> double {
+                return 0;
             },
-            {0.0, 0.0},
-            {1.0, 1.0}
-    };
+            0.0,
+            1.0 );
 
     heat_equation_2d_solver<precision_order> solver{
             [](const vector<double> &r) -> double {
-                return std::exp(r[0]);
+                const auto fst = std::sin(2*pi*r[0]);
+                return fst * std::cos( 2*pi*r[1]);
             },
             [](const vector<double>&) -> double {
-                return 0.25;
+                return 1.0;
             },
             [](const vector<double>&) -> double {
                 return 1.0;
@@ -547,31 +550,150 @@ void third_test(){
             [](const vector<double> &, double) -> double {
                 return 0.0;
             },
-            &conditions,
+            &x_conditions,
+            &y_conditions,
             {0.05, 0.05},
             impl_msm_solver,
             0.0,
             step
     };
 
-
-    std::ofstream output("../../results/test/test3/test3.dat", std::ios_base::trunc);
-    for( int i = 0; i < steps_amount; ++i ) {
+    int i = 0;
+    {
+        std::ofstream output("../../results/test/test3/test_" + std::to_string(i) + ".dat", std::ios_base::trunc);
+        const auto result = solver.get_current_layer();
+        const auto layer = result.solution;
+        for (int j = 0; j < layer.height(); ++j) {
+            for (int k = 0; k < layer.width(); ++k) {
+                output << j * solver.grid_steps_sizes[0] << "\t"
+                       << k * solver.grid_steps_sizes[1] << "\t"
+                       << layer[j][k] << std::endl;
+            }
+        }
+        output.flush();
+        output.close();
+        ++i;
+    }
+    do {
+        std::ofstream output("../../results/test/test3/test_" + std::to_string(i) + ".dat", std::ios_base::trunc);
         std::cout << "Time : " << i * step << std::endl;
         const auto result = solver.get_next_step();
         const auto layer = result.solution;
         for( int j = 0; j < layer.height(); ++j ) {
             for( int k = 0; k < layer.width(); ++k ) {
-                output  << i * step << "\t"
-                        << j * solver.lattice_steps_sizes[0] << "\t"
-                        << k * solver.lattice_steps_sizes[1] << "\t"
+                output << j * solver.grid_steps_sizes[0] << "\t"
+                       << k * solver.grid_steps_sizes[1] << "\t"
                         << layer[j][k] << std::endl;
             }
         }
-    }
+        output.flush();
+        output.close();
+        ++i;
+    } while (i < steps_amount );
+}
+void third_task(){
+    constexpr int steps_amount = 11;
+    constexpr double step = 0.1;
 
-    output.flush();
-    output.close();
+    using namespace Numerical_methods;
+
+    constexpr int precision_order = 4;
+    constexpr int table_size = 3;
+    Butcher_table<table_size> table{
+            {{1.0 / 6, 0.0, -1.0 / 6},
+                      {1.0 / 12, 5.0 / 12, 0.0},
+                               {0.5, 1.0 / 3, 1.0 / 6}},
+            {1.0 / 6, 2.0 / 3, 1.0 / 6},
+            {0.0,     1.0 / 2, 1.0}
+    };
+    std::vector<double> coefficients = {3.0 / 8, 19.0 / 24, -5.0 / 24, 1.0 / 24};
+    implicit_Runge_Kutta_method<matrix<double>, table_size, precision_order> impl_rkm_method{};
+    impl_rkm_method.set_Butcher_table(table);
+
+    Adams_Moulton_method<matrix<double>, precision_order> impl_msm_solver{};
+    impl_msm_solver.set_starting_method(impl_rkm_method);
+    impl_msm_solver.set_coefficients(coefficients);
+
+
+    const Dirichlet_conditions<double,2> x_conditions(
+            [](const vector<double>&, double) -> double {
+                return 0;
+            },
+            [](const vector<double>&, double) -> double {
+                return 0;
+            },
+            0.0,
+            1.0 );
+    const Neumann_conditions<double,2> y_conditions(
+            [](const vector<double>&, double) -> double {
+                return 0;
+            },
+            [](const vector<double>&, double) -> double {
+                return 0;
+            },
+            0.0,
+            1.0 );
+
+    heat_equation_2d_solver<precision_order> solver{
+            [](const vector<double> &r) -> double {
+                const auto fst = std::sin(8*pi*r[0]);
+                return fst * std::cos( 8*pi*r[1]);
+            },
+            [](const vector<double>& r) -> double {
+                const auto temp = r[0] * r[0] * r[1] * r[1];
+                return 1.0 - 0.5 * temp * ( 1.0 - temp);
+            },
+            [](const vector<double>& r) -> double {
+                const auto siny = std::sin( 2 * pi * r[1]);
+                const auto sinx = std::sin( 2 * pi * r[0]);
+                return 1.0 + 0.5 * sinx * siny;
+            },
+            [](const vector<double>& r, double t) -> double {
+                const auto tht = std::tanh(t);
+                const auto cosx = std::cos( 2 * pi * r[0]);
+                const auto cosy = std::cos( 2 * pi * r[1]);
+                return 80.0 * cosx * cosy * tht;
+            },
+            &x_conditions,
+            &y_conditions,
+            {0.05, 0.05},
+            impl_msm_solver,
+            0.0,
+            step
+    };
+
+    int i = 0;
+    {
+        std::ofstream output("../../results/third/res_" + std::to_string(i) + ".dat", std::ios_base::trunc);
+        const auto result = solver.get_current_layer();
+        const auto layer = result.solution;
+        for (int j = 0; j < layer.height(); ++j) {
+            for (int k = 0; k < layer.width(); ++k) {
+                output << j * solver.grid_steps_sizes[0] << "\t"
+                       << k * solver.grid_steps_sizes[1] << "\t"
+                       << layer[j][k] << std::endl;
+            }
+        }
+        output.flush();
+        output.close();
+        ++i;
+    }
+    do {
+        std::ofstream output("../../results/third/res_" + std::to_string(i) + ".dat", std::ios_base::trunc);
+        std::cout << "Time : " << i * step << std::endl;
+        const auto result = solver.get_next_step();
+        const auto layer = result.solution;
+        for( int j = 0; j < layer.height(); ++j ) {
+            for( int k = 0; k < layer.width(); ++k ) {
+                output << j * solver.grid_steps_sizes[0] << "\t"
+                       << k * solver.grid_steps_sizes[1] << "\t"
+                        << layer[j][k] << std::endl;
+            }
+        }
+        output.flush();
+        output.close();
+        ++i;
+    } while (i < steps_amount );
 }
 
 int main() {
@@ -582,5 +704,7 @@ int main() {
     //second_task_test2();
     //second_task();
     third_test();
+    //third_task();
+
     return 0;
 };

@@ -16,8 +16,8 @@ namespace Numerical_methods{
     public:
         using coordinate_t = vector<double>;
         using solution_t = double;
-        using function_t = std::function<solution_t(const coordinate_t&)>;
-        using solution_function_t = std::function<solution_t(const coordinate_t&, double)>;
+        using function_t = std::function<std::decay<solution_t>::type(const coordinate_t&)>;
+        using solution_function_t = std::function<std::decay<solution_t>::type(const coordinate_t&, double)>;
     };
 
     template< std::size_t precision_order,
@@ -27,172 +27,96 @@ namespace Numerical_methods{
 
     template<solution_element_t solution_t, std::size_t dimension>
     class boundary_conditions {
-    public:
-        using coordinate_t = vector<double>;
-        using function_t = std::function< solution_t(double, double)>;
     private:
-        [[nodiscard]] virtual std::function< matrix<heat_equation_solver::solution_t>
-                                        ( const matrix<heat_equation_solver::solution_t>&, double)>
-                                        get_function_impl (
-                                                const heat_equation_solver::function_t& c_function,
-                                                const heat_equation_solver::function_t& lambda_function,
-                                                const heat_equation_solver::solution_function_t& f_function,
-                                                std::size_t height,
-                                                std::size_t width ) const= 0;
+        [[nodiscard]] virtual bool is_left_derivative_impl() const = 0;
+        [[nodiscard]] virtual bool is_right_derivative_impl() const = 0;
     public:
-        const std::vector<function_t> left_values;
-        const std::vector<function_t> right_values;
-        const coordinate_t left_border;
-        const coordinate_t right_border;
+        using function_t = std::function<
+                typename std::decay<solution_t>::type
+                        ( const vector<double>&, double)>;
+    public:
+        const function_t left_function;
+        const function_t right_function;
+        const double left_border;
+        const double right_border;
+
+        [[nodiscard]] bool is_left_derivative() const {
+            return this->is_left_derivative_impl();
+        };
+        [[nodiscard]] bool is_right_derivative() const {
+            return this->is_right_derivative_impl();
+        };
+
         boundary_conditions(
-                            std::vector<function_t> left_values_,
-                            std::vector<function_t> right_values_,
-                            coordinate_t left_border_,
-                            coordinate_t right_border_)
+                            function_t left_values_,
+                            function_t right_values_,
+                            double left_border_,
+                            double right_border_)
                             :
-                            left_values(left_values_),
-                            right_values(right_values_),
-                            left_border(std::move(left_border_)),
-                            right_border(std::move(right_border_))
+                            left_function(left_values_),
+                            right_function(right_values_),
+                            left_border( left_border_),
+                            right_border(right_border_)
                             {
-            assert( left_border.size() == dimension);
-            assert( right_border.size() == dimension);
-            assert( left_values_.size() == dimension);
-            assert( right_values_.size() == dimension);
         }
-        [[nodiscard]] std::function< matrix<heat_equation_solver::solution_t>
-                ( const matrix<heat_equation_solver::solution_t>&, double)>
-            get_function( const heat_equation_solver::function_t& c_function,
-                                           const heat_equation_solver::function_t& lambda_function,
-                                           const heat_equation_solver::solution_function_t& f_function,
-                                           std::size_t height,
-                                           std::size_t width ) const {
-                return this->get_function_impl( c_function, lambda_function, f_function, height, width );
-        };
     };
 
-    template<solution_element_t solution_t>
-    class Dirichlet_conditions : public boundary_conditions<solution_t, 1>{
-    public:
-        using boundary_conditions<solution_t, 1>::boundary_conditions;
-    };
-
-    template<solution_element_t solution_t>
-    class Neumann_conditions : public boundary_conditions<solution_t, 1>{
-    public:
-        using boundary_conditions<solution_t, 1>::boundary_conditions;
-    };
-
-    template<solution_element_t solution_t>
-    class mixed_conditions : public boundary_conditions<solution_t, 1>{
-    public:
-        using boundary_conditions<solution_t, 1>::boundary_conditions;
-    };
-
-    template<solution_element_t solution_t>
-    class first_mixed_conditions : public mixed_conditions<solution_t>{
-    public:
-        using mixed_conditions<solution_t>::mixed_conditions;
-    };
-
-    template<solution_element_t solution_t>
-    class second_mixed_conditions : public mixed_conditions<solution_t>{
-    public:
-        using mixed_conditions<solution_t>::mixed_conditions;
-    };
-
-    template<solution_element_t solution_t>
-    class first_and_second_conditions : public boundary_conditions<solution_t, 2>{
-    public:
-        using base_t = boundary_conditions<solution_t, 2>;
+    template<solution_element_t solution_t, std::size_t dimension>
+    class Dirichlet_conditions : public boundary_conditions<solution_t, dimension>{
     private:
-        [[nodiscard]] std::function< matrix<heat_equation_solver::solution_t>
-                ( const matrix<heat_equation_solver::solution_t>&, double)>
-                get_function_impl (
-                                        const heat_equation_solver::function_t& c_function,
-                                        const heat_equation_solver::function_t& lambda_function,
-                                        const heat_equation_solver::solution_function_t& f_function,
-                                        std::size_t height,
-                                        std::size_t width ) const override {
-
-            const auto h_x = base_t::right_border[0] - base_t::left_border[0];
-            const auto h_y = base_t::right_border[1] - base_t::left_border[1];
-
-            const auto left_x = [this]( double y, double time) -> double {
-                return base_t::left_values[0](y, time);
-            };
-            const auto right_x = [this]( double y, double time) -> double {
-                return base_t::right_values[0](y, time);
-            };
-            const auto Mu_b = base_t::left_values[1];
-            const auto Mu_u = base_t::right_values[1];
-            const auto result = [&c_function,&lambda_function,&f_function,h_x,h_y,left_x,right_x,Mu_b,Mu_u]
-                    (const matrix<heat_equation_solver::solution_t> &old_solution, double time)
-                    -> matrix<heat_equation_solver::solution_t> {
-                auto result = old_solution;
-                for (int i = 1; i < old_solution.height() - 1; ++i) {
-                    for (int j = 1; j < old_solution.width() - 1; ++j) {
-                        const auto middle_point = old_solution[i][j];
-                        result[i][j] =
-                                1.0 / c_function({i * h_x, j * h_y})
-                                * (1.0 / (h_x * h_x)
-                                   * (lambda_function({i * h_x + 0.5, j * h_y})
-                                      * (old_solution[i + 1][j] - middle_point)
-                                      - lambda_function({i * h_x - 0.5, j * h_y})
-                                        * (middle_point - old_solution[i - 1][j] ))
-                                   + 1.0 / (h_y * h_y)
-                                     * (lambda_function({i * h_x, j * h_y + 0.5})
-                                        * (old_solution[i][j + 1] - middle_point)
-                                        - lambda_function({i * h_x, j * h_y - 0.5})
-                                          * (middle_point - old_solution[i][j - 1] )))
-                                + f_function({i * h_x, j * h_y}, time);
-                    }
-                }
-                for( int i = 0; i < result.width(); ++i ) {
-                    result[0][i] = left_x( i * h_y , time );
-                    result[result.height() - 1][i] = right_x( i * h_y , time );
-                }
-                for( int i = 1; i < result.height() - 1; ++i ) {
-                    int j = 0;
-                    auto middle_point = old_solution[i][j];
-                    result[i][j] =
-                            1.0 / c_function({i * h_x, j * h_y})
-                            * (1.0 / (h_x * h_x)
-                               * (lambda_function({i * h_x + 0.5, j * h_y})
-                                  * (old_solution[i + 1][j] - middle_point)
-                                  - lambda_function({i * h_x - 0.5, j * h_y})
-                                    * (middle_point - old_solution[i - 1][j] ))
-                               + 1.0 / (h_y * h_y)
-                                 * (lambda_function({i * h_x, j * h_y + 0.5})
-                                    * (old_solution[i][j + 1] - middle_point)
-                                    - lambda_function({i * h_x, j * h_y - 0.5})
-                                      * (middle_point
-                                        - ( old_solution[i][j + 1] - 2 * h_y * Mu_b( i * h_x, time ) ) ) ) )
-                            + f_function({i * h_x, j * h_y}, time);
-
-                    j = static_cast<int>(result.width()) - 1;
-                    middle_point = old_solution[i][j];
-                    result[i][j] =
-                            1.0 / c_function({i * h_x, j * h_y})
-                            * (1.0 / (h_x * h_x)
-                               * (lambda_function({i * h_x + 0.5, j * h_y})
-                                  * (old_solution[i + 1][j] - middle_point)
-                                  - lambda_function({i * h_x - 0.5, j * h_y})
-                                    * (middle_point - old_solution[i - 1][j] ))
-                               + 1.0 / (h_y * h_y)
-                                 * (lambda_function({i * h_x, j * h_y + 0.5})
-                                    * ( ( old_solution[i][j - 1] + 2 * h_y * Mu_u( i * h_x,time) )
-                                        - middle_point)
-                                    - lambda_function({i * h_x, j * h_y - 0.5})
-                                      * (middle_point - old_solution[i][j - 1] )))
-                            + f_function({i * h_x, j * h_y}, time);
-                }
-                return result;
-            };
-            return result;
-        };
+        [[nodiscard]] bool is_left_derivative_impl() const {
+            return false;
+        }
+        [[nodiscard]] bool is_right_derivative_impl() const {
+            return false;
+        }
     public:
-        using boundary_conditions<solution_t, 2>::boundary_conditions;
+        using boundary_conditions<solution_t, dimension>::boundary_conditions;
+    };
+
+    template<solution_element_t solution_t, std::size_t dimension>
+    class Neumann_conditions : public boundary_conditions<solution_t, dimension>{
+    private:
+        [[nodiscard]] bool is_left_derivative_impl() const {
+            return true;
+        }
+        [[nodiscard]] bool is_right_derivative_impl() const {
+            return true;
+        }
+    public:
+        using boundary_conditions<solution_t, dimension>::boundary_conditions;
+    };
+
+    template<solution_element_t solution_t, std::size_t dimension>
+    class mixed_conditions : public boundary_conditions<solution_t, dimension>{
+    public:
+        using boundary_conditions<solution_t, dimension>::boundary_conditions;
+    };
+
+    template<solution_element_t solution_t, std::size_t dimension>
+    class first_mixed_conditions : public mixed_conditions<solution_t, dimension>{
+    private:
+        [[nodiscard]] bool is_left_derivative_impl() const {
+            return false;
+        }
+        [[nodiscard]] bool is_right_derivative_impl() const {
+            return true;
+        }
+    public:
+        using mixed_conditions<solution_t, dimension>::mixed_conditions;
+    };
+
+    template<solution_element_t solution_t, std::size_t dimension>
+    class second_mixed_conditions : public mixed_conditions<solution_t, dimension>{
+    private:
+        [[nodiscard]] bool is_left_derivative_impl() const {
+            return true;
+        }
+        [[nodiscard]] bool is_right_derivative_impl() const {
+            return false;
+        }
+    public:
+        using mixed_conditions<solution_t, dimension>::mixed_conditions;
     };
 
     template< std::size_t precision_order,
@@ -212,50 +136,253 @@ namespace Numerical_methods{
         function_t lambda_function;
         solution_function_t f_function;
     public:
-        const boundary_conditions<double, 2> *const conditions = nullptr;
+        const boundary_conditions<double, 2> *const x_conditions = nullptr;
+        const boundary_conditions<double, 2> *const y_conditions = nullptr;
         double time;
         double time_step;
-        const coordinate_t lattice_steps_sizes;
-        heat_equation_2d_solver(
-                                function_t  initial_conditions_,
-                                function_t  c_function_,
-                                function_t  lambda_function_,
-                                solution_function_t  f_function_,
-                                const boundary_conditions<double, 2>* const& conditions_,
-                                const coordinate_t& steps_sizes_,
-                                solver_t<>& solver,
-                                double initial_time_,
-                                double time_step)
-                                :   initial_conditions( initial_conditions_),
-                                    c_function( c_function_),
-                                    lambda_function( lambda_function_),
-                                    f_function( f_function_),
-                                    conditions(conditions_),
-                                    lattice_steps_sizes(steps_sizes_),
-                                    ode_solver(solver),
-                                    time(initial_time_),
-                                    time_step(time_step)
-                                {
-            assert( steps_sizes_.size() == 2 );
+        const coordinate_t grid_steps_sizes;
 
-            const matrix<solution_t> initial_layer( conditions_->right_border[0] / lattice_steps_sizes[0],
-                                                    conditions_->right_border[1] / lattice_steps_sizes[1] );
-            for( int i = 0; i < initial_layer.height(); ++i){
-                for( int j = 0; j < initial_layer.width(); ++j){
-                    initial_layer[i][j] = initial_conditions_( {i * steps_sizes_[0],
-                                                                j * steps_sizes_[1]});
+        heat_equation_2d_solver(
+                function_t initial_conditions_,
+                function_t c_function_,
+                function_t lambda_function_,
+                solution_function_t f_function_,
+                const boundary_conditions<double, 2> *const &x_conditions_,
+                const boundary_conditions<double, 2> *const &y_conditions_,
+                const coordinate_t &steps_sizes_,
+                solver_t<> &solver,
+                double initial_time_,
+                double time_step)
+                : initial_conditions(initial_conditions_),
+                  c_function(c_function_),
+                  lambda_function(lambda_function_),
+                  f_function(f_function_),
+                  x_conditions(x_conditions_),
+                  y_conditions(y_conditions_),
+                  grid_steps_sizes(steps_sizes_),
+                  ode_solver(solver),
+                  time(initial_time_),
+                  time_step(time_step) {
+            assert(steps_sizes_.size() == 2);
+
+            const std::size_t width =
+                    static_cast<int>((y_conditions_->right_border - y_conditions_->left_border) / steps_sizes_[1]) + 1;
+            const std::size_t height =
+                    static_cast<int>((x_conditions_->right_border - x_conditions_->left_border) / steps_sizes_[0]) + 1;
+            const matrix<solution_t> initial_layer(height, width);
+
+            for (int i = 0; i < initial_layer.height(); ++i) {
+                for (int j = 0; j < initial_layer.width(); ++j) {
+                    const double x = x_conditions_->left_border + i * steps_sizes_[0];
+                    const double y = y_conditions_->left_border + j * steps_sizes_[1];
+                    initial_layer[i][j] = initial_conditions_({x, y});
                 }
             }
             ode_solver.set_initial_conditions(initial_layer);
-            ode_solver.set_time( time );
-            ode_solver.set_function( conditions->get_function(
-                    this->c_function,
-                    this->lambda_function,
-                    this->f_function,
-                    initial_layer.height(),
-                    initial_layer.width())
-                    );
-                                }
+            ode_solver.set_time(time);
+
+            const auto h_x = steps_sizes_[0];
+            const auto h_y = steps_sizes_[1];
+
+
+            std::vector< std::function< std::decay<double>::type
+                    (const solution_t&,
+                     const solution_t&,
+                     const solution_t&,
+                     const solution_t&,
+                     const solution_t&,
+                     double,
+                     double)>> functions( 4);
+            if (!x_conditions->is_left_derivative()) {
+
+                functions[0] = [this]( const solution_t& left, const solution_t& right,
+                                const solution_t& up, const solution_t& down,
+                                const solution_t& middle,
+                                double y, double t) -> double {
+                    return x_conditions->left_function({y}, t);
+                };
+            } else {
+                functions[0] = [this, h_x, h_y]( const solution_t& left, const solution_t& right,
+                                      const solution_t& up, const solution_t& down,
+                                      const solution_t& middle,
+                                      double y, double t) -> double {
+                    const auto result =
+                                   1.0 / c_function({ 0.0, y})
+                                   * (1.0 / (h_x * h_x)
+                                      * (lambda_function({ 0.5, y})
+                                         * (right - middle)
+                                         - lambda_function({ -0.5, y})
+                                           * ( middle
+                                           - ( right - 2.0 * h_x * x_conditions->left_function( {y}, t))))
+                                      + 1.0 / (h_y * h_y)
+                                        * (lambda_function({ 0.0, y + 0.5})
+                                           * ( up - middle)
+                                           - lambda_function({ 0.0, y - 0.5})
+                                             * (middle - down)))
+                                   + f_function({ 0, y}, t);
+                    return result;
+                };
+            }
+            if (!x_conditions->is_right_derivative()) {
+                functions[1] = [this]( const solution_t& left, const solution_t& right,
+                                 const solution_t& up, const solution_t& down,
+                                 const solution_t& middle,
+                                 double y, double t) -> double {
+                    return x_conditions->right_function({y}, t);
+                };
+            } else {
+                functions[1] = [this, h_x, h_y]( const solution_t& left, const solution_t& right,
+                                           const solution_t& up, const solution_t& down,
+                                           const solution_t& middle,
+                                           double y, double t) -> double {
+                    const auto result =
+                            1.0 / c_function({ 0.0, y})
+                            * (1.0 / (h_x * h_x)
+                               * (lambda_function({ 0.5, y})
+                                  * ( ( left + 2.0 * h_x * x_conditions->right_function({y},t)) - middle)
+                                  - lambda_function({ -0.5, y})
+                                    * ( middle - left))
+                               + 1.0 / (h_y * h_y)
+                                 * (lambda_function({ 0.0, y + 0.5})
+                                    * ( up - middle)
+                                    - lambda_function({ 0.0, y - 0.5})
+                                      * (middle - down)))
+                            + f_function({ 0, y}, t);
+                    return result;
+                };
+            }
+            if (!y_conditions->is_left_derivative()) {
+                functions[2] = [this](const solution_t& left, const solution_t& right,
+                                const solution_t& up, const solution_t& down,
+                                const solution_t& middle,
+                                double x, double t) -> double {
+                    return y_conditions->left_function({x}, t);
+                };
+            } else {
+                functions[2] = [this, h_x, h_y](const solution_t& left, const solution_t& right,
+                                          const solution_t& up, const solution_t& down,
+                                          const solution_t& middle,
+                                          double x, double t) -> double {
+                    const auto result =
+                            1.0 / c_function({0.0, x})
+                            * (1.0 / (h_x * h_x)
+                               * (lambda_function({0.5, x})
+                                  * (right - middle)
+                                  - lambda_function({-0.5, x})
+                                    * ( middle - right))
+                               + 1.0 / (h_y * h_y)
+                                 * (lambda_function({0.0, x + 0.5})
+                                    * ( up - middle)
+                                    - lambda_function({0.0, x - 0.5})
+                                      * (middle - ( up - 2.0 * h_y * y_conditions->left_function({x}, t)))))
+                            + f_function({0, x}, t);
+                    return result;
+                };
+            }
+            if (!y_conditions->is_left_derivative()) {
+                functions[3] = [this](const solution_t& left, const solution_t& right,
+                                 const solution_t& up, const solution_t& down,
+                                 const solution_t& middle,
+                                 double x, double t) -> double {
+                    return y_conditions->right_function({x}, t);
+                };
+            } else {
+                functions[3] = [this, h_x, h_y]( const solution_t& left, const solution_t& right,
+                                           const solution_t& up, const solution_t& down,
+                                           const solution_t& middle,
+                                           double y, double t) -> double {
+                    const auto result =
+                            1.0 / c_function({ 0.0, y})
+                            * (1.0 / (h_x * h_x)
+                               * (lambda_function({ 0.5, y})
+                                  * (right - middle)
+                                  - lambda_function({ -0.5, y})
+                                    * ( middle - left ))
+                               + 1.0 / (h_y * h_y)
+                                 * (lambda_function({ 0.0, y + 0.5})
+                                    * ( down + 2.0 * y_conditions->right_function({y},t) - middle)
+                                    - lambda_function({ 0.0, y - 0.5})
+                                      * (middle - down)))
+                            + f_function({ 0, y}, t);
+                    return result;
+                };
+            }
+
+            const auto left_x = functions[0];
+            const auto right_x = functions[1];
+            const auto left_y = functions[2];
+            const auto right_y = functions[3];
+            const auto ode_function = [this, h_x, h_y, left_x, left_y, right_x, right_y]
+                    (const matrix<heat_equation_solver::solution_t> &old_solution, double t)
+                    -> matrix<heat_equation_solver::solution_t> {
+                auto result = old_solution;
+                result[0][0] = left_x( result[0][0],result[0][0],result[0][0],result[0][0],result[0][0], 0, t );
+                result[0][result.width() - 1] = left_x( result[0][0],result[0][0],result[0][0],result[0][0],result[0][0], (result.width() - 1) * h_y, t );
+                result[result.height() - 1][0] = left_x( result[0][0],result[0][0],result[0][0],result[0][0],result[0][0], 0, t );
+                result[result.height() - 1][result.width() - 1] = left_x( result[0][0],result[0][0],result[0][0],result[0][0],result[0][0], (result.width() - 1) * h_y, t );
+                for (int i = 1; i < result.width() - 1; ++i) {
+                    result[0][i] = left_x( result[0][i],
+                                           result[1][i],
+                                           result[0][i + 1],
+                                           result[0][i - 1],
+                                           result[0][i],
+                                           i * h_y,
+                                           t);
+                    const auto N = result.height() - 1;
+                    result[N][i] = right_x(result[N][i],
+                                           result[N][i],
+                                           result[N][i + 1],
+                                           result[N][i - 1],
+                                           result[N][i],
+                                           i * h_y,
+                                           t);
+                }
+                for (int i = 1; i < result.height() - 1; ++i) {
+                    result[i][0] = left_y( result[i - 1][0],
+                                           result[i + 1][0],
+                                           result[i][1],
+                                           result[i][0],
+                                           result[i][0],
+                                           i * h_x,
+                                           t);
+                    const auto N = result.width() - 1;
+                    result[i][N] = right_y(result[i - 1][N],
+                                           result[i + 1][N],
+                                           result[i][N],
+                                           result[i][N - 1],
+                                           result[i][N],
+                                           i * h_x,
+                                           t);
+                }
+
+                for (int i = 1; i < old_solution.height() - 1; ++i) {
+                    for (int j = 1; j < old_solution.width() - 1; ++j) {
+                        const auto middle_point = old_solution[i][j];
+                        result[i][j] =
+                                1.0 / c_function({i * h_x, j * h_y})
+                                * (1.0 / (h_x * h_x)
+                                   * (lambda_function({i * h_x + 0.5, j * h_y})
+                                      * (old_solution[i + 1][j] - middle_point)
+                                      - lambda_function({i * h_x - 0.5, j * h_y})
+                                        * (middle_point - old_solution[i - 1][j]))
+                                   + 1.0 / (h_y * h_y)
+                                     * (lambda_function({i * h_x, j * h_y + 0.5})
+                                        * (old_solution[i][j + 1] - middle_point)
+                                        - lambda_function({i * h_x, j * h_y - 0.5})
+                                          * (middle_point - old_solution[i][j - 1])))
+                                + f_function({i * h_x, j * h_y}, t);
+                    }
+                }
+                return result;
+            };
+            ode_solver.set_function( ode_function );
+        };
+
+
+        return_t<matrix<solution_t>> get_current_layer() {
+            const auto result = ode_solver.get_last_element();
+            return {result, 0.0};
+        }
 
         return_t<matrix<solution_t>> get_next_step() {
             const auto result = ode_solver.get_next_step( time_step );
